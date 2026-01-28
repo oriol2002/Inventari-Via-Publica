@@ -1,0 +1,440 @@
+
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { PedestrianCrossing, CrossingState, AssetType } from '../types';
+import { 
+  ArrowLeftIcon, 
+  PrinterIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+
+interface Props {
+  crossings: PedestrianCrossing[];
+  reportType: 'maintenance' | 'technical' | 'statistical';
+  reportTitle?: string;
+  reportId?: string;
+  onBack: () => void;
+  city: string;
+  aiAnalysis?: string;
+}
+
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e', '#a855f7'];
+
+const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, onBack, city, aiAnalysis }) => {
+  const [internalId, setInternalId] = useState<string>('');
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (externalId) {
+      setInternalId(externalId);
+    } else {
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const storageKey = `report_counter_${dateStr}`;
+      const currentCount = parseInt(localStorage.getItem(storageKey) || '-1');
+      const newCount = currentCount + 1;
+      localStorage.setItem(storageKey, newCount.toString());
+      setInternalId(`${dateStr}${String(newCount).padStart(2, '0')}`);
+    }
+  }, [externalId]);
+
+  const itemsToDisplay = useMemo(() => {
+    return reportType === 'technical' ? crossings.filter(c => c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS) : crossings;
+  }, [crossings, reportType]);
+
+  const itemChunks = useMemo(() => {
+    const chunks: PedestrianCrossing[][] = [];
+    // Utilitzem 3 items per pàgina per defecte
+    for (let i = 0; i < itemsToDisplay.length; i += 3) {
+      chunks.push(itemsToDisplay.slice(i, i + 3));
+    }
+    return chunks;
+  }, [itemsToDisplay]);
+
+  // Càlculs estadístics per l'informe 'statistical'
+  const stats = useMemo(() => {
+    if (reportType !== 'statistical') return null;
+    
+    const total = crossings.length;
+    const critical = crossings.filter(c => c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS).length;
+    const excellent = crossings.filter(c => c.state === CrossingState.EXCELLENT || c.state === CrossingState.GOOD).length;
+    const healthIndex = total > 0 ? Math.round((excellent / total) * 100) : 0;
+
+    // State Distribution
+    const stateCounts = crossings.reduce((acc, c) => {
+      acc[c.state] = (acc[c.state] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const stateData = Object.values(CrossingState).map(s => ({ name: s, value: stateCounts[s] || 0 })).filter(d => d.value > 0);
+
+    // Asset Types
+    const assetCounts = crossings.reduce((acc, c) => {
+      acc[c.assetType] = (acc[c.assetType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const assetData = Object.values(AssetType).map(t => ({ name: t, value: assetCounts[t] || 0 } as { name: string, value: number })).filter(d => d.value > 0).sort((a,b) => b.value - a.value).slice(0, 10);
+
+    // Streets with issues
+    const streetCounts = crossings
+      .filter(c => c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS)
+      .reduce((acc, c) => {
+        const street = c.location.street ? c.location.street.trim().toUpperCase() : 'SENSE ADREÇA';
+        acc[street] = (acc[street] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+    const streetData = Object.entries(streetCounts).map(([name, value]) => ({ name, value } as { name: string, value: number })).sort((a,b) => b.value - a.value).slice(0, 8);
+
+    // Neighborhoods
+    const neighCounts = crossings.reduce((acc, c) => {
+      const n = c.location.neighborhood || 'Altres';
+      acc[n] = (acc[n] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const neighborhoodData = Object.entries(neighCounts).map(([name, value]) => ({ name, value } as { name: string, value: number })).sort((a,b) => b.value - a.value).slice(0, 8);
+
+    return { total, critical, healthIndex, stateData, assetData, streetData, neighborhoodData };
+  }, [crossings, reportType]);
+
+  const displayDate = new Date().toLocaleDateString('ca-ES');
+  const displayTime = new Date().toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' });
+
+  // RENDERITZAT ESTADÍSTIC (Dashboard per a impressió)
+  if (reportType === 'statistical' && stats) {
+    return (
+      <div className="report-overlay fixed inset-0 z-[5000] bg-slate-100 md:bg-slate-900/40 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-300 print:block print:bg-white print:static print:overflow-visible">
+        <header className="px-4 md:px-6 py-4 bg-white border-b border-slate-300 flex items-center justify-between shadow-sm sticky top-0 z-50 print:hidden flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+              <ArrowLeftIcon className="w-5 h-5 text-slate-600" />
+            </button>
+            <div>
+              <h2 className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-tight line-clamp-1">Estadístic {city}</h2>
+              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stats.total} Actius</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+              <PrinterIcon className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Imprimir / PDF</span>
+              <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
+            </button>
+          </div>
+        </header>
+
+        <div id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
+          <div className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
+            {/* Pàgina 1 Estadístiques */}
+            <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
+               <div className="border-b-[4px] border-blue-600 pb-6 mb-8 flex justify-between items-end">
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter">Informe Executiu</h1>
+                    <p className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">Àrea de Mobilitat • {city}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Expedient</div>
+                    <div className="text-lg md:text-xl font-black text-slate-900">#{internalId.replace('REP-', '')}</div>
+                  </div>
+               </div>
+
+               {/* KPIS */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+                  <div className="bg-slate-50 p-6 rounded-2xl text-center border border-slate-200 print:bg-slate-50">
+                     <div className="text-4xl font-black text-slate-900">{stats.total}</div>
+                     <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Total Actius</div>
+                  </div>
+                  <div className="bg-rose-50 p-6 rounded-2xl text-center border border-rose-100 print:bg-rose-50">
+                     <div className="text-4xl font-black text-rose-600">{stats.critical}</div>
+                     <div className="text-[8px] font-black text-rose-800/60 uppercase tracking-widest mt-1">Intervenció Urgent</div>
+                  </div>
+                  <div className="bg-emerald-50 p-6 rounded-2xl text-center border border-emerald-100 print:bg-emerald-50">
+                     <div className="text-4xl font-black text-emerald-600">{stats.healthIndex}%</div>
+                     <div className="text-[8px] font-black text-emerald-800/60 uppercase tracking-widest mt-1">Índex de Salut</div>
+                  </div>
+               </div>
+
+               {/* GRÀFIQUES */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
+                  <div className="border border-slate-200 rounded-2xl p-4">
+                     <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-widest mb-4 text-center">Estat de Conservació</h3>
+                     <div style={{ width: '100%', height: '200px' }}>
+                        <ResponsiveContainer>
+                          <PieChart>
+                            <Pie data={stats.stateData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" stroke="none">
+                              {stats.stateData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                            </Pie>
+                            <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '8px', fontWeight: 700 }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                     </div>
+                  </div>
+                  <div className="border border-slate-200 rounded-2xl p-4">
+                     <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-widest mb-4 text-center">Top 10 Tipologies</h3>
+                     <div style={{ width: '100%', height: '200px' }}>
+                        <ResponsiveContainer>
+                          <BarChart data={stats.assetData} layout="vertical" margin={{ left: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={80} style={{ fontSize: '7px', fontWeight: 700 }} />
+                            <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={12} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="border border-slate-200 rounded-2xl p-6 flex-1 mb-8 min-h-[250px] md:min-h-0">
+                  <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-widest mb-6 text-center">Distribució per Barris</h3>
+                  <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
+                      <ResponsiveContainer>
+                        <BarChart data={stats.neighborhoodData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} style={{ fontSize: '8px', fontWeight: 700 }} interval={0} />
+                          <YAxis axisLine={false} tickLine={false} style={{ fontSize: '8px' }} />
+                          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                   </div>
+               </div>
+
+               <div className="mt-auto pt-4 border-t border-slate-200 flex justify-between text-[8px] font-black text-slate-500 uppercase">
+                  <span>Generat automàticament</span>
+                  <span>{displayDate}</span>
+               </div>
+            </div>
+
+            {/* Pàgina 2 Detall Carrers */}
+            <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
+               <h3 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-6 pb-2 border-b border-rose-100">Zones amb necessitat d'intervenció (Top Carrers)</h3>
+               
+               <div className="mb-10">
+                  <div style={{ width: '100%', height: '300px' }}>
+                      <ResponsiveContainer>
+                        <BarChart data={stats.streetData} layout="vertical" margin={{ left: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                          <XAxis type="number" hide />
+                          <YAxis dataKey="name" type="category" width={130} style={{ fontSize: '9px', fontWeight: 700 }} />
+                          <Bar dataKey="value" fill="#f43f5e" radius={[0, 4, 4, 0]} barSize={20} label={{ position: 'right', fontSize: 9, fill: '#64748b' }} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                   </div>
+               </div>
+
+               <div className="flex-1 bg-slate-50 rounded-2xl p-8 border border-slate-200 relative overflow-hidden min-h-[300px] md:min-h-0">
+                  <div className="flex justify-between items-start mb-4">
+                     <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                       {aiAnalysis && <SparklesIcon className="w-4 h-4 text-blue-500" />}
+                       Resum i Conclusions
+                     </h4>
+                     {aiAnalysis && <span className="text-[7px] font-bold text-blue-500 uppercase bg-blue-50 px-2 py-1 rounded">Generat per IA</span>}
+                  </div>
+                  
+                  {aiAnalysis ? (
+                    <div className="text-[10px] text-slate-700 leading-relaxed whitespace-pre-line font-medium">
+                      {aiAnalysis}
+                    </div>
+                  ) : (
+                    <ul className="list-disc list-inside space-y-3 text-[10px] text-slate-700 font-medium">
+                       <li>S'han analitzat un total de <strong>{stats.total}</strong> elements a la via pública de {city}.</li>
+                       <li>Es detecta una concentració d'incidències crítiques principalment al carrer <strong>{stats.streetData[0]?.name || 'N/A'}</strong>.</li>
+                       <li>L'índex de salut global de la infraestructura és del <strong>{stats.healthIndex}%</strong>.</li>
+                       <li>Es recomana prioritzar les actuacions als elements marcats com a 'Perillós' (Vermell) en l'informe tècnic adjunt.</li>
+                    </ul>
+                  )}
+
+                  <div className="mt-10 pt-10 border-t border-slate-300">
+                     <p className="text-[8px] font-bold text-slate-500 uppercase mb-8">Signatura Tècnic Responsable</p>
+                     <div className="h-16 border-b border-slate-400 w-64"></div>
+                  </div>
+               </div>
+
+               <div className="mt-auto pt-4 border-t border-slate-200 flex justify-between text-[8px] font-black text-slate-500 uppercase">
+                  <span>Àrea de Mobilitat • {city}</span>
+                  <span>Pàgina 2 de 2</span>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDERITZAT NORMAL (Manteniment / Tècnic) - LLISTA
+  return (
+    <div className="report-overlay fixed inset-0 z-[5000] bg-slate-100 md:bg-slate-900/40 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-300 print:block print:bg-white print:static print:overflow-visible">
+      <header className="px-4 md:px-6 py-4 bg-white border-b border-slate-300 flex items-center justify-between shadow-sm sticky top-0 z-50 print:hidden flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+            <ArrowLeftIcon className="w-5 h-5 text-slate-600" />
+          </button>
+          <div>
+            <h2 className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-tight line-clamp-1">Informe de {city}</h2>
+            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{itemsToDisplay.length} Actius reportats</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => window.print()} 
+            className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95"
+          >
+            <PrinterIcon className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Imprimir / Desar PDF</span>
+            <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
+          </button>
+        </div>
+      </header>
+
+      <div id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
+        <div ref={reportRef} className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
+          
+          {/* PORTADA */}
+          <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0">
+            <div className="h-full flex flex-col">
+              <div className="border-b-[6px] border-blue-600 pb-10 mb-12 flex justify-between items-end">
+                <div>
+                  <h1 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-[0.9]">
+                    Informe<br/><span className="text-blue-600">{city}</span>
+                  </h1>
+                  <p className="text-[10px] md:text-[12px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-6">Àrea de Mobilitat • {city}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest">Codi Expedient</div>
+                  <div className="text-xl md:text-2xl font-black text-slate-900">#{internalId.replace('REP-', '')}</div>
+                </div>
+              </div>
+
+              <div className="space-y-8 md:space-y-12">
+                <section>
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Resum de l'Auditoria</h3>
+                  <div className="grid grid-cols-2 gap-4 md:gap-6">
+                    <div className="bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-200 text-center">
+                      <div className="text-3xl md:text-4xl font-black text-slate-900">{itemsToDisplay.length}</div>
+                      <div className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Actius Analitzats</div>
+                    </div>
+                    <div className="bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-200 text-center">
+                      <div className="text-3xl md:text-4xl font-black text-blue-600 uppercase">{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
+                      <div className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Tipologia d'Informe</div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="bg-blue-50 p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-blue-200">
+                   <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Certificació de dades</h3>
+                   <p className="text-xs md:text-sm font-medium text-slate-700 leading-relaxed italic">
+                     Aquest document certifica l'estat dels elements de via pública inventariats mitjançant el sistema de gestió vial. Totes les imatges i coordenades han estat capturades in-situ per personal autoritzat.
+                   </p>
+                </section>
+
+                <section className="mt-12 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">
+                  <div className="flex justify-between border-b border-slate-200 pb-2">
+                    <span>Data i Hora de generació</span>
+                    <span className="text-slate-900">{displayDate} - {displayTime}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-200 pb-2">
+                    <span>Municipi</span>
+                    <span className="text-slate-900 uppercase">{city}</span>
+                  </div>
+                </section>
+              </div>
+
+              <div className="mt-auto pt-10 border-t border-slate-200 flex justify-between items-center text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Àrea de Mobilitat • {city}</span>
+                <span>Pàgina 1 de {itemChunks.length + 1}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* PÀGINES DE CONTINGUT */}
+          {itemChunks.map((chunk, pageIndex) => (
+            <div key={pageIndex} className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
+              <div className="h-full flex flex-col">
+                <header className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
+                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Detall Elements {city} (Part {pageIndex + 1})</h3>
+                  <div className="text-[9px] font-black text-slate-400">Exp. #{internalId.replace('REP-', '')}</div>
+                </header>
+
+                <div className="flex-1 flex flex-col justify-between print:block">
+                  {chunk.map((item) => (
+                    <div key={item.id} className="report-item-card flex flex-col md:flex-row h-auto md:h-[75mm] gap-4 md:gap-6 py-4 border-b border-slate-200 last:border-0 print:h-auto print:mb-8 print:flex-row print:flex print:gap-6 print:break-inside-avoid">
+                      <div className="w-full h-48 md:w-[85mm] md:h-full rounded-2xl overflow-hidden border border-slate-300 flex-shrink-0 shadow-sm print:h-[60mm] print:w-[85mm]">
+                        <img src={item.image} className="w-full h-full object-cover print:object-contain bg-slate-100" alt="" />
+                      </div>
+
+                      <div className="flex-1 flex flex-col justify-between py-1">
+                        <div>
+                          <div className="flex justify-between items-start mb-1">
+                             <h4 className="text-sm font-black text-slate-900 uppercase truncate max-w-[220px]">
+                               {item.location.street} {item.location.number || 'S/N'}
+                             </h4>
+                             <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">ID: {item.id.slice(-8).toUpperCase()}</span>
+                          </div>
+                          
+                          <div className="text-[8px] font-black text-blue-600 uppercase mb-3 tracking-widest">
+                            {item.assetType} • {item.location.neighborhood || city} • {city}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-3 mt-4">
+                            <div className="col-span-2">
+                              <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Adreça Completa</label>
+                              <span className="text-[10px] font-black text-slate-800 uppercase">{item.location.street} {item.location.number || ''}</span>
+                            </div>
+                            <div>
+                              <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Estat actual</label>
+                              <span className={`text-[10px] font-black uppercase ${
+                                item.state === CrossingState.POOR || item.state === CrossingState.DANGEROUS ? 'text-rose-600' : 'text-blue-600'
+                              }`}>{item.state}</span>
+                            </div>
+                            <div>
+                              <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Darrera actuació</label>
+                              <span className="text-[10px] font-black text-slate-800">{item.lastPaintedDate}</span>
+                            </div>
+                            <div>
+                              <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Tipus de Pintura</label>
+                              <span className="text-[10px] font-black text-slate-800 uppercase">{item.paintType || 'ESTÀNDARD'}</span>
+                            </div>
+                            <div>
+                              <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Coordenades</label>
+                              <span className="text-[9px] font-bold text-slate-600">{item.location.lat.toFixed(5)}, {item.location.lng.toFixed(5)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 md:mt-2">
+                           <label className="text-[7px] font-black text-slate-400 uppercase block mb-1">Observacions tècniques</label>
+                           <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-[9px] font-medium text-slate-700 leading-tight min-h-[50px] md:h-[18mm] overflow-hidden italic print:h-auto">
+                             {item.notes || 'Sense observacions reportades en aquest actiu.'}
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {chunk.length < 3 && Array.from({ length: 3 - chunk.length }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-[75mm] border-b border-transparent print:hidden hidden md:block"></div>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-slate-200 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <span>Auditoria Vial • {city}</span>
+                  <span>Pàgina {pageIndex + 2} de {itemChunks.length + 1}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ReportView;
