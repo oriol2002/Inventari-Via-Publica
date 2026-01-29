@@ -1,0 +1,2 @@
+# This file ensures the api directory exists but is empty
+# Vercel will not try to create serverless functions
