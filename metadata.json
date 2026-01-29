@@ -1,0 +1,8 @@
+{
+  "name": "Inventari elements Via Publica",
+  "description": "Aplicació professional per a l'inventari de via pública i generació d'informes tècnics multi-pàgina.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
