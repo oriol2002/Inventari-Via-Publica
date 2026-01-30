@@ -23,24 +23,39 @@ code {
   height: 100%;
 }
 
-/* Print styles - hide everything except report */
+/* Print styles - only print report content */
 @media print {
-  * {
-    display: none;
+  body, html {
+    background: white;
+    margin: 0;
+    padding: 0;
   }
-  
-  .report-overlay,
-  .report-overlay * {
+
+  #root > * {
+    display: none !important;
+  }
+
+  .report-overlay {
+    display: block !important;
+    position: static !important;
+    background: white !important;
+    z-index: auto !important;
+  }
+
+  .report-overlay > * {
     display: block !important;
   }
-  
+
+  header {
+    display: none !important;
+  }
+
   .a4-page {
     page-break-after: always;
     page-break-inside: avoid;
-  }
-  
-  body, html, #root {
-    margin: 0;
-    padding: 0;
+    box-shadow: none !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
   }
 }
