@@ -81,7 +81,7 @@ export const processFile = async (file: File, userId: string) => {
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, compressed, {
-        cacheControl: '3600',
+        cacheControl: '31536000',
         contentType: compressed.type,
         upsert: false,
       });

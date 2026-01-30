@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobilitat-tortosa-v4';
+const CACHE_NAME = 'mobilitat-tortosa-v5';
 
 self.addEventListener('install', (event) => {
   // Force activate immediately
@@ -23,43 +23,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  
-  // For API requests and HTML, always go network-first
-  if (request.url.includes('/api/') || 
-      request.url.includes('supabase.co') ||
-      request.mode === 'navigate' ||
-      request.destination === 'document') {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          // Don't cache API responses
-          return response;
-        })
-        .catch(() => {
-          // Offline fallback for navigation
-          if (request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-          return new Response('Network error', { status: 503 });
-        })
-    );
-  } else {
-    // For static assets, use cache-first with network fallback
+
+  // Cache-first for images (incloses les de Supabase)
+  if (request.destination === 'image') {
     event.respondWith(
       caches.match(request)
         .then(cached => {
-          if (cached) {
-            // Return cached but also fetch fresh in background
-            fetch(request).then(response => {
-              if (response.ok) {
-                caches.open(CACHE_NAME).then(cache => {
-                  cache.put(request, response);
-                });
-              }
-            });
-            return cached;
-          }
-          // Not in cache, fetch from network
+          if (cached) return cached;
           return fetch(request).then(response => {
             if (response.ok) {
               caches.open(CACHE_NAME).then(cache => {
@@ -70,7 +40,51 @@ self.addEventListener('fetch', (event) => {
           });
         })
     );
+    return;
   }
+
+  // For API requests and HTML, always go network-first
+  if (request.url.includes('/api/') || 
+      request.url.includes('supabase.co') ||
+      request.mode === 'navigate' ||
+      request.destination === 'document') {
+    event.respondWith(
+      fetch(request)
+        .then(response => response)
+        .catch(() => {
+          if (request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return new Response('Network error', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // For other static assets, use cache-first with network fallback
+  event.respondWith(
+    caches.match(request)
+      .then(cached => {
+        if (cached) {
+          fetch(request).then(response => {
+            if (response.ok) {
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(request, response);
+              });
+            }
+          });
+          return cached;
+        }
+        return fetch(request).then(response => {
+          if (response.ok) {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, response);
+            });
+          }
+          return response;
+        });
+      })
+  );
 });
 
 // Listen for skip waiting message
