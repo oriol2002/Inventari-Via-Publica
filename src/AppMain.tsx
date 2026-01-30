@@ -168,7 +168,7 @@ const App: React.FC = () => {
       setActiveReport(newReport);
     } catch (error) {
       console.error("Error guardant informe:", error);
-      alert("⚠️ Informe guardat localment (Error de Xarxa).");
+      // No mostrar error - l'informe ja està guardat localment
       setActiveReport(newReport);
     } finally {
       setIsGeneratingReport(false);

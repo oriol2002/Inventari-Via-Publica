@@ -204,16 +204,18 @@ export const dbService = {
   },
 
   async saveReport(report: SavedReport): Promise<void> {
-    // Local
+    // Local - guardar PRIMER (síncrono)
     try {
       const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
       const updatedReports = [report, ...localReports.filter((r: SavedReport) => r.id !== report.id)];
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(updatedReports));
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Error saving report locally:", e); 
+    }
 
-    // Server
+    // Server - intenta sincronitzar en background sense bloquear
     try {
-      const { error } = await supabase.from('reports').upsert({
+      await supabase.from('reports').upsert({
           id: report.id,
           title: report.title,
           date: report.date,
@@ -222,10 +224,9 @@ export const dbService = {
           ai_analysis: report.aiAnalysis,
           created_at: new Date(report.createdAt).toISOString()
       });
-      if (error) throw error;
     } catch (error) {
-      console.error("Error saving report to cloud", error);
-      throw error;
+      // No llançar error - l'informe ja està guardat localment
+      console.warn("Report not synced to cloud (will sync when connection is available):", error);
     }
   },
 
