@@ -239,6 +239,7 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
                     if (isSelectionMode) {
                       e.stopPropagation();
                       toggleSelection(crossing.id, e);
+                      onEdit(crossing);
                     }
                   }}
                   className={`absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shadow-sm z-10 ${
