@@ -5,6 +5,7 @@ import { PedestrianCrossing, AssetType, CrossingState, SavedReport } from '../ty
 // Utilitzem les claus hardcoded com a fallback
 const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL as string || 'https://xnbvbcubteklfpabhbpl.supabase.co'; 
 const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYnZiY3VidGVrbGZwYWJoYnBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MTA1MDAsImV4cCI6MjA4NDk4NjUwMH0.d_lLFsDznEuJGSeKyFqpTlfCQzKjipg-qVnG_pO_Amw';
+const OFFLINE_MODE = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
 
 // EXPORTEM la instància perquè useAuth.tsx la pugui utilitzar
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -31,7 +32,13 @@ export const dbService = {
       console.error("Error carregar local:", e);
     }
 
-    // 2. SEMPRE intentar carregar del servidor FIRST
+    // 2. Si estem en mode offline, retornar locals directament
+    if (OFFLINE_MODE) {
+      console.warn('⚠️ Mode OFFLINE actiu: retornant dades locals');
+      return localData.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    // 3. SEMPRE intentar carregar del servidor FIRST
     try {
       console.log('🌐 Sincronitzant amb Supabase...');
       const { data, error } = await supabase
@@ -110,7 +117,9 @@ export const dbService = {
       console.error("Local save error:", e); 
     }
 
-    // 2. Enviar al Núvol
+    // 2. Enviar al Núvol (si no estem en offline)
+    if (OFFLINE_MODE) return;
+
     try {
       const payload = {
         id: crossing.id,
@@ -146,6 +155,8 @@ export const dbService = {
       }
     } catch (e) { console.error(e); }
 
+    if (OFFLINE_MODE) return;
+
     try {
       const { error } = await supabase
         .from('crossings')
@@ -170,7 +181,13 @@ export const dbService = {
       console.error('Error carregant informes locals:', e); 
     }
 
-    // 2. SEMPRE traer del servidor
+    // 2. Si estem en mode offline, retornar locals directament
+    if (OFFLINE_MODE) {
+      console.warn('⚠️ Mode OFFLINE actiu: retornant informes locals');
+      return localReports.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    // 3. SEMPRE traer del servidor
     try {
       console.log('🌐 Sincronitzant informes amb Supabase...');
       const { data, error } = await supabase
@@ -228,6 +245,8 @@ export const dbService = {
     }
 
     // Server - intenta sincronitzar en background sense bloquear
+    if (OFFLINE_MODE) return;
+
     try {
       await supabase.from('reports').upsert({
           id: report.id,
@@ -248,7 +267,9 @@ export const dbService = {
     try {
       const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(localReports.filter((r: SavedReport) => r.id !== id)));
-      await supabase.from('reports').delete().eq('id', id);
+      if (!OFFLINE_MODE) {
+        await supabase.from('reports').delete().eq('id', id);
+      }
     } catch (e) { console.error(e); }
   },
 
@@ -256,7 +277,9 @@ export const dbService = {
     try {
       const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(localReports.filter((r: SavedReport) => !ids.includes(r.id))));
-      await supabase.from('reports').delete().in('id', ids);
+      if (!OFFLINE_MODE) {
+        await supabase.from('reports').delete().in('id', ids);
+      }
     } catch (e) { console.error(e); }
   },
 

@@ -4,6 +4,7 @@ import Compressor from 'compressorjs';
 import { supabase } from './dbService';
 
 const BUCKET = 'photos';
+const OFFLINE_MODE = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
 
 interface ExifData {
   lat: number | null;
@@ -61,6 +62,12 @@ const compressImage = async (file: File, maxWidth: number, quality: number): Pro
 
 // Processar fitxer: EXIF + compressió + pujada + insert
 export const processFile = async (file: File, userId: string) => {
+  if (OFFLINE_MODE) {
+    const error = new Error('Mode OFFLINE actiu: no es pujaran imatges a Supabase');
+    console.warn(error.message);
+    return { success: false, error };
+  }
+
   if (!userId) {
     const error = new Error('userId és obligatori per pujar la foto');
     console.error(error);
