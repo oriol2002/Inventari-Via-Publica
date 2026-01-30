@@ -67,6 +67,17 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           scrollX: 0,
           scrollY: -window.scrollY,
           onclone: (clonedDoc: Document) => {
+            // Remove unsupported CSS rules with okch() color functions
+            const styles = Array.from(clonedDoc.querySelectorAll('style'));
+            styles.forEach((style) => {
+              if (style.textContent) {
+                style.textContent = style.textContent
+                  .replace(/okch\([^)]+\)/g, '#000000')
+                  .replace(/color\([^)]+\)/g, '#000000');
+              }
+            });
+
+            // Handle cross-origin images
             const imgs = Array.from(clonedDoc.querySelectorAll('img')) as HTMLImageElement[];
             imgs.forEach((img) => {
               const src = img.getAttribute('src') || '';
