@@ -37,24 +37,50 @@ code {
     background: white;
   }
 
+  /* Container padre sin gaps en impresión */
+  #report-container-div > div {
+    gap: 0 !important;
+    margin: 0 !important;
+  }
+
   .a4-page {
     page-break-after: always;
     page-break-inside: avoid;
     width: 210mm;
     height: auto;
     padding: 15mm;
-    margin: 0;
+    margin: 0 !important;
     background: white;
     box-shadow: none;
     overflow: hidden;
+    display: block !important;
+    break-after: page;
   }
 
   .a4-page:last-child {
     page-break-after: avoid;
+    break-after: avoid;
   }
 
   .report-item-card {
     page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Remove padding from container in print */
+  #report-container-div {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Space and gaps removal */
+  .space-y-8,
+  .space-y-12,
+  .gap-4,
+  .gap-12,
+  .gap-6 {
+    gap: 0 !important;
+    margin: 0 !important;
   }
 
   svg {
