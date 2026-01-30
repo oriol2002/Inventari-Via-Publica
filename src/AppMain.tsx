@@ -213,12 +213,12 @@ const App: React.FC = () => {
   const NavItem = ({ id, label, icon: Icon }: { id: typeof view, label: string, icon: any }) => (
     <button 
       onClick={() => setView(id)}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+      className={`flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-lg md:rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
         view === id ? 'bg-blue-100 text-blue-700 shadow-sm border border-blue-200' : 'text-slate-500 hover:text-slate-800'
       }`}
     >
-      <Icon className="w-4 h-4" />
-      {label}
+      <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" />
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 
@@ -239,34 +239,34 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <header className="bg-white border-b border-slate-300 px-4 md:px-8 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-slate-300 px-[calc(1rem+env(safe-area-inset-left))] md:px-8 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] pr-[calc(1rem+env(safe-area-inset-right))] sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg">
-              <CloudIcon className="w-6 h-6" />
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg flex-shrink-0">
+              <CloudIcon className="w-5 md:w-6 h-5 md:h-6" />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-xl font-black text-slate-900 leading-none tracking-tighter uppercase">TORTOSA</h1>
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Inventari Via Pública</p>
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-lg md:text-xl font-black text-slate-900 leading-none tracking-tighter uppercase">TORTOSA</h1>
+              <p className="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">Inventari Via Pública</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
             {/* Botó Notificacions */}
             <button 
               onClick={() => setShowNotifications(true)} 
-              className="p-2.5 bg-slate-50 rounded-full text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors relative"
+              className="p-2 md:p-2.5 bg-slate-50 rounded-full text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors relative"
             >
-              <BellIcon className="w-5 h-5" />
-              {alerts.length > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-rose-500 border-2 border-white rounded-full text-[8px] font-black text-white flex items-center justify-center">{alerts.length}</span>}
+              <BellIcon className="w-4 md:w-5 h-4 md:h-5" />
+              {alerts.length > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-rose-500 border-2 border-white rounded-full text-[7px] md:text-[8px] font-black text-white flex items-center justify-center">{alerts.length}</span>}
             </button>
 
             {/* Botó Nou */}
             <button 
               onClick={() => { setEditingCrossing(null); setHasImageInForm(false); setIsFormOpen(true); }}
-              className="bg-blue-600 text-white px-4 md:px-6 py-2.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-3 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-1.5 md:gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-700 transition-colors flex-shrink-0"
             >
-              <PlusIcon className="w-5 h-5 stroke-[3]" /> Nou
+              <PlusIcon className="w-4 md:w-5 h-4 md:h-5 stroke-[3]" /> <span className="hidden sm:inline">Nou</span>
             </button>
 
             {/* Botó Logout */}
@@ -275,16 +275,16 @@ const App: React.FC = () => {
                 await logout();
                 window.location.href = '/login';
               }}
-              className="bg-red-600 text-white px-4 md:px-6 py-2.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-colors"
+              className="bg-red-600 text-white px-3 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-1.5 md:gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-colors flex-shrink-0"
             >
-              <ArrowLeftOnRectangleIcon className="w-5 h-5" /> Logout
+              <ArrowLeftOnRectangleIcon className="w-4 md:w-5 h-4 md:h-5" /> <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <nav className="bg-white border-b border-slate-200 px-4 md:px-8 py-2 overflow-x-auto scrollbar-hide z-40">
-        <div className="max-w-[1600px] mx-auto flex items-center gap-1">
+      <nav className="bg-white border-b border-slate-200 px-[calc(1rem+env(safe-area-inset-left))] md:px-8 pr-[calc(1rem+env(safe-area-inset-right))] py-2 overflow-x-auto scrollbar-hide z-40">
+        <div className="max-w-[1600px] mx-auto flex items-center gap-0.5 md:gap-1">
           <NavItem id="map" label="Mapa" icon={MapIcon} />
           <NavItem id="list" label="Llista" icon={ListBulletIcon} />
           <NavItem id="explorer" label="Explorar" icon={TableCellsIcon} />
@@ -293,7 +293,7 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+      <main className="flex-1 overflow-y-auto p-[calc(1rem+env(safe-area-inset-left))] md:p-8 pr-[calc(1rem+env(safe-area-inset-right))] pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="max-w-[1600px] mx-auto h-full">
           {isLoading ? (
             <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>
