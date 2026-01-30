@@ -18,8 +18,6 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 interface Props {
   crossings: PedestrianCrossing[];
@@ -37,72 +35,24 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
 
-  const generatePDF = async () => {
+  const generatePDF = () => {
     if (!reportRef.current) {
       alert('Error: No s\'ha pogut trobar l\'informe per descarregar.');
       return;
     }
 
-    try {
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Use html2canvas only on a simplified version
-      const clonedReport = reportRef.current.cloneNode(true) as HTMLElement;
+    // Afegeix una classe per a impressió
+    reportRef.current.classList.add('printing');
+    
+    // Espera un moment perquè el navegador actualitzi el DOM
+    setTimeout(() => {
+      window.print();
       
-      // Remove problematic elements
-      const charts = clonedReport.querySelectorAll('[class*="recharts"]');
-      charts.forEach(chart => {
-        const parent = chart.parentElement;
-        if (parent) {
-          const text = document.createElement('div');
-          text.textContent = '[Gràfica]';
-          text.style.padding = '20px';
-          text.style.backgroundColor = '#f0f0f0';
-          text.style.textAlign = 'center';
-          parent.replaceChild(text, chart);
-        }
-      });
-
-      // Create temporary container
-      const temp = document.createElement('div');
-      temp.style.position = 'absolute';
-      temp.style.left = '-9999px';
-      temp.style.width = '210mm';
-      temp.style.backgroundColor = 'white';
-      temp.appendChild(clonedReport);
-      document.body.appendChild(temp);
-
-      try {
-        const canvas = await html2canvas(temp, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          allowTaint: true,
-          imageTimeout: 5000,
-          windowWidth: 794, // A4 width in pixels
-          removeContainer: false
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-        const filename = `${internalId}_${city}.pdf`;
-        pdf.save(filename);
-      } finally {
-        document.body.removeChild(temp);
-      }
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error al generar el PDF. Intenta de nou.');
-    }
+      // Elimina la classe després
+      setTimeout(() => {
+        reportRef.current?.classList.remove('printing');
+      }, 500);
+    }, 100);
   };
 
   useEffect(() => {
