@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PedestrianCrossing, CrossingState, AssetType } from '../types';
 import { 
   XMarkIcon, 
@@ -7,22 +7,59 @@ import {
   CalendarIcon,
   MapPinIcon,
   CheckCircleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  DocumentTextIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   alerts: PedestrianCrossing[];
+  onAlertClick?: (alert: PedestrianCrossing) => void;
+  onGenerateReport?: (selectedAlerts: PedestrianCrossing[]) => void;
 }
 
-const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts }) => {
+const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertClick, onGenerateReport }) => {
+  const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
+
   if (!isOpen) return null;
 
   const calculateMonths = (dateStr: string) => {
     const start = new Date(dateStr);
     const end = new Date();
     return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  };
+
+  const toggleAlert = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedAlerts);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedAlerts(newSelected);
+  };
+
+  const selectAll = () => {
+    if (selectedAlerts.size === alerts.length) {
+      setSelectedAlerts(new Set());
+    } else {
+      setSelectedAlerts(new Set(alerts.map(a => a.id)));
+    }
+  };
+
+  const handleGenerateReport = () => {
+    const selectedCrossings = alerts.filter(a => selectedAlerts.has(a.id));
+    if (selectedCrossings.length === 0) {
+      alert('Si us plau, selecciona almenys una alerta');
+      return;
+    }
+    if (onGenerateReport) {
+      onGenerateReport(selectedCrossings);
+      onClose();
+    }
   };
 
   return (
@@ -42,19 +79,63 @@ const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts }) => {
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><XMarkIcon className="w-6 h-6 text-slate-500" /></button>
         </div>
 
+        {/* Selection bar */}
+        {alerts.length > 0 && (
+          <div className="px-6 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-3 justify-between">
+            <button
+              onClick={selectAll}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-colors ${
+                selectedAlerts.size === alerts.length
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-100'
+              }`}
+            >
+              <CheckIcon className="w-4 h-4" />
+              {selectedAlerts.size === alerts.length ? 'Desseleccionar tot' : 'Seleccionar tot'}
+            </button>
+            <span className="text-[9px] font-black text-blue-600 uppercase">
+              {selectedAlerts.size} seleccionades
+            </span>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {alerts.length > 0 ? (
             alerts.map(alert => {
               const months = calculateMonths(alert.lastPaintedDate);
               const isExcellentCheck = alert.assetType === AssetType.CROSSING && alert.state === CrossingState.EXCELLENT && months >= 6;
               const isCritical = alert.state === CrossingState.POOR || alert.state === CrossingState.DANGEROUS;
+              const isSelected = selectedAlerts.has(alert.id);
 
               return (
-                <div key={alert.id} className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all group border-l-4 border-l-transparent hover:border-l-blue-500">
+                <div
+                  key={alert.id}
+                  onClick={() => onAlertClick?.(alert)}
+                  className={`bg-white border-2 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition-all group cursor-pointer ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-blue-300'
+                  }`}
+                >
                   <div className="flex gap-4">
+                    {/* Checkbox */}
+                    <div
+                      onClick={e => toggleAlert(alert.id, e)}
+                      className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-slate-300 hover:border-blue-500'
+                      }`}
+                    >
+                      {isSelected && <CheckIcon className="w-4 h-4 text-white" />}
+                    </div>
+
+                    {/* Image */}
                     <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200">
                       <img src={alert.image} alt="Vista" className="w-full h-full object-cover" />
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-2">
                         <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${
@@ -93,8 +174,22 @@ const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts }) => {
           )}
         </div>
 
-        <div className="p-8 border-t border-slate-200 bg-slate-50">
-          <button onClick={onClose} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl">Tancar Panell</button>
+        <div className="p-8 border-t border-slate-200 bg-slate-50 space-y-3">
+          {selectedAlerts.size > 0 && (
+            <button
+              onClick={handleGenerateReport}
+              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <DocumentTextIcon className="w-5 h-5" />
+              Generar Informe ({selectedAlerts.size})
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-colors"
+          >
+            Tancar Panell
+          </button>
         </div>
       </div>
     </>

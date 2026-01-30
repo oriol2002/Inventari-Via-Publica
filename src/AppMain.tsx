@@ -375,7 +375,20 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <NotificationCenter isOpen={showNotifications} onClose={() => setShowNotifications(false)} alerts={alerts} />
+      <NotificationCenter 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+        alerts={alerts}
+        onAlertClick={(alert) => {
+          setEditingCrossing(alert);
+          setHasImageInForm(true);
+          setIsFormOpen(true);
+          setShowNotifications(false);
+        }}
+        onGenerateReport={(selectedAlerts) => {
+          handleCreateReport(selectedAlerts, 'maintenance');
+        }}
+      />
 
       {activeReport && (
         <ReportView 
