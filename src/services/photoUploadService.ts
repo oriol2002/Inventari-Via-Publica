@@ -37,12 +37,12 @@ const readExif = async (file: File): Promise<ExifData> => {
   }
 };
 
-// Comprimir imatge a max 800px d’ample, quality ~0.7, sense EXIF
-const compressImage = async (file: File): Promise<File> => {
+// Comprimir imatge a mida/quality configurables, sense EXIF
+const compressImage = async (file: File, maxWidth: number, quality: number): Promise<File> => {
   return new Promise((resolve, reject) => {
     new Compressor(file, {
-      maxWidth: 800,
-      quality: 0.7,
+      maxWidth,
+      quality,
       mimeType: 'image/webp',
       convertTypes: ['image/png', 'image/jpeg', 'image/heic', 'image/heif'],
       success(result: Blob) {
@@ -71,12 +71,14 @@ export const processFile = async (file: File, userId: string) => {
     // 1) Llegir EXIF (GPS + data)
     const { lat, lng, capturedAt } = await readExif(file);
 
-    // 2) Comprimir imatge (sense EXIF)
-    const compressed = await compressImage(file);
+    // 2) Comprimir imatge gran + thumbnail (sense EXIF)
+    const compressed = await compressImage(file, 800, 0.7);
+    const compressedThumb = await compressImage(file, 240, 0.6);
 
     // 3) Pujar a Supabase Storage
     const fileName = `${createUuid()}.webp`;
     const filePath = `photos/${fileName}`;
+    const thumbPath = `photos/thumbs/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
@@ -85,6 +87,16 @@ export const processFile = async (file: File, userId: string) => {
         contentType: compressed.type,
         upsert: false,
       });
+
+    if (!uploadError) {
+      await supabase.storage
+        .from(BUCKET)
+        .upload(thumbPath, compressedThumb, {
+          cacheControl: '31536000',
+          contentType: compressedThumb.type,
+          upsert: false,
+        });
+    }
 
     if (uploadError) {
       console.error('Error pujant imatge:', uploadError);
@@ -113,7 +125,17 @@ export const processFile = async (file: File, userId: string) => {
       .from(BUCKET)
       .getPublicUrl(filePath);
 
-    return { success: true, path: filePath, publicUrl: publicUrlData?.publicUrl };
+    const { data: publicThumbUrlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(thumbPath);
+
+    return { 
+      success: true, 
+      path: filePath, 
+      thumbPath,
+      publicUrl: publicUrlData?.publicUrl,
+      publicThumbUrl: publicThumbUrlData?.publicUrl
+    };
   } catch (error) {
     console.error('Error processant fitxer:', error);
     return { success: false, error };

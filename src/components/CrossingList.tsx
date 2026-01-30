@@ -238,7 +238,7 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
               }`}
             >
               <div className="h-24 relative bg-slate-200 overflow-hidden">
-                <LazyImage src={crossing.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Vista" />
+                <LazyImage src={crossing.imageThumb || crossing.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Vista" />
                 <div 
                   onClick={(e) => {
                     if (isSelectionMode) {

@@ -62,6 +62,7 @@ export const dbService = {
             id: row.id,
             assetType: (row.asset_type as AssetType) || AssetType.CROSSING,
             image: row.image || '',
+            imageThumb: row.image_thumb || '',
             location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
             state: (row.state as CrossingState) || CrossingState.GOOD,
             lastPaintedDate: row.last_painted_date || new Date().toISOString().split('T')[0],
@@ -77,7 +78,8 @@ export const dbService = {
       try {
         const lightData = serverData.map(item => ({
           ...item,
-          image: '' // NO guardem imatges a localStorage (massa pesades)
+          image: '', // NO guardem imatges grans a localStorage (massa pesades)
+          imageThumb: item.imageThumb || ''
         }));
         localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(lightData));
         console.log('💾 Metadata sincronitzada (sense imatges)');
@@ -101,7 +103,7 @@ export const dbService = {
       const stored = localStorage.getItem(CROSSINGS_STORAGE_KEY);
       let list: PedestrianCrossing[] = stored ? JSON.parse(stored) : [];
       list = list.filter(c => c.id !== crossing.id);
-      const lightCrossing = { ...crossing, image: '' };
+      const lightCrossing = { ...crossing, image: '', imageThumb: crossing.imageThumb || '' };
       list.unshift(lightCrossing);
       localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(list));
     } catch (e) { 
@@ -114,6 +116,7 @@ export const dbService = {
         id: crossing.id,
         asset_type: crossing.assetType,
         image: crossing.image,
+        image_thumb: crossing.imageThumb || null,
         location: crossing.location,
         state: crossing.state,
         last_painted_date: crossing.lastPaintedDate,

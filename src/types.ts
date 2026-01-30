@@ -37,6 +37,7 @@ export interface Location {
 export interface PedestrianCrossing {
   id: string;
   image: string;
+  imageThumb?: string;
   location: Location;
   state: CrossingState;
   lastPaintedDate: string;

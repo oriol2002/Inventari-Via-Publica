@@ -133,7 +133,7 @@ const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertC
 
                     {/* Image */}
                     <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200">
-                      <LazyImage src={alert.image} alt="Vista" className="w-full h-full object-cover" />
+                      <LazyImage src={alert.imageThumb || alert.image} alt="Vista" className="w-full h-full object-cover" />
                     </div>
 
                     {/* Content */}

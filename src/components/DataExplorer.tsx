@@ -296,7 +296,7 @@ const DataExplorer: React.FC<Props> = ({ crossings, currentFilters, onFilterChan
                   >
                     <td className="px-2 py-3">
                       <div className="flex items-center gap-2">
-                        <LazyImage src={c.image} className="w-8 h-8 rounded-lg object-cover border border-slate-200 flex-shrink-0" alt="" />
+                        <LazyImage src={c.imageThumb || c.image} className="w-8 h-8 rounded-lg object-cover border border-slate-200 flex-shrink-0" alt="" />
                         <div className="flex flex-col items-start min-w-0">
                           <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase border tracking-tight whitespace-nowrap ${getStateBadgeStyles(c.state)}`}>
                             {c.assetType}

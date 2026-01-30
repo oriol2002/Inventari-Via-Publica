@@ -20,6 +20,7 @@ interface Props {
 
 const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert, userId }) => {
   const [image, setImage] = useState<string | null>(initialData?.image || null);
+  const [imageThumb, setImageThumb] = useState<string | null>(initialData?.imageThumb || null);
   const [location, setLocation] = useState<Location | null>(initialData?.location || null);
   const [state, setState] = useState<CrossingState>(initialData?.state || CrossingState.GOOD);
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
@@ -342,6 +343,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           const result = await processFile(file, userId);
           if (result.success && result.publicUrl) {
             setImage(result.publicUrl);
+            if (result.publicThumbUrl) {
+              setImageThumb(result.publicThumbUrl);
+            }
             if (onImageCapture) onImageCapture();
             return;
           }
@@ -353,7 +357,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       // Fallback: preview local si falla la pujada
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result as string);
+        const preview = reader.result as string;
+        setImage(preview);
+        setImageThumb(preview);
         if (onImageCapture) onImageCapture();
       };
       reader.readAsDataURL(file);
@@ -443,6 +449,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     onSubmit({
       id,
       image,
+      imageThumb: imageThumb || undefined,
       location: finalLocation,
       state,
       lastPaintedDate: lastPainted,
