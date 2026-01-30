@@ -39,9 +39,18 @@ const App: React.FC = () => {
   const [filters, setFilters] = useState<FilterOptions>({ city: 'Tortosa' });
   const [activeReport, setActiveReport] = useState<SavedReport | null>(null);
   
-  const [hasImageInForm, setHasImageInForm] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const { logout } = useAuth();
+  const handleForceSync = async () => {
+    setIsSyncing(true);
+    const result = await dbService.forceSync();
+    alert(result.message);
+    if (result.success) {
+      // Recarga les dades
+      fetchData();
+    }
+    setIsSyncing(false);
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -252,6 +261,20 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+            {/* Botó Sincronització */}
+            <button 
+              onClick={handleForceSync}
+              disabled={isSyncing}
+              className={`p-2 md:p-2.5 rounded-full border transition-colors flex-shrink-0 ${
+                isSyncing 
+                  ? 'bg-blue-100 text-blue-600 border-blue-300 animate-spin' 
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
+              }`}
+              title="Sincronitzar dades"
+            >
+              <ArrowPathIcon className="w-4 md:w-5 h-4 md:h-5" />
+            </button>
+
             {/* Botó Notificacions */}
             <button 
               onClick={() => setShowNotifications(true)} 

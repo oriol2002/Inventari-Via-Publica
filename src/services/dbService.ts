@@ -20,22 +20,20 @@ export const dbService = {
     
     console.log('🔍 Carregant dades...');
     
-    // 1. Carregar Localment (Sempre funciona)
+    // 1. Carregar Localment (Fallback)
     try {
       const stored = localStorage.getItem(CROSSINGS_STORAGE_KEY);
       if (stored) {
         localData = JSON.parse(stored);
         console.log('📦 Dades locals:', localData.length, 'elements');
-      } else {
-        console.log('📦 No hi ha dades locals');
       }
     } catch (e) {
       console.error("Error carregar local:", e);
     }
 
-    // 2. Intentar carregar del servidor i fusionar
+    // 2. SEMPRE intentar carregar del servidor FIRST
     try {
-      console.log('🌐 Consultant Supabase...');
+      console.log('🌐 Sincronitzant amb Supabase...');
       const { data, error } = await supabase
         .from('crossings')
         .select('*')
@@ -43,23 +41,28 @@ export const dbService = {
 
       if (error) {
         console.error('❌ Error Supabase:', error);
-        throw error;
+        // Si falla Supabase, usar locals
+        return localData.sort((a,b) => b.createdAt - a.createdAt);
       }
       
-      console.log('✅ Dades del servidor:', data?.length || 0, 'elements');
+      if (!data || data.length === 0) {
+        console.log('📭 Servidor buit, retornant dades locals');
+        return localData.sort((a,b) => b.createdAt - a.createdAt);
+      }
+
+      console.log('✅ Dades del servidor:', data.length, 'elements');
       
       const serverData = (data || []).map(row => {
-        // Gestió robusta de location si ve com a string o objecte
         let loc = row.location;
         if (typeof loc === 'string') {
-            try { loc = JSON.parse(loc); } catch (e) { loc = { lat: 40.8122, lng: 0.5215 }; }
+            try { loc = JSON.parse(loc); } catch (e) { loc = { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' }; }
         }
 
         return {
             id: row.id,
             assetType: (row.asset_type as AssetType) || AssetType.CROSSING,
-            image: row.image,
-            location: loc || { lat: 40.8122, lng: 0.5215 },
+            image: row.image || '',
+            location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
             state: (row.state as CrossingState) || CrossingState.GOOD,
             lastPaintedDate: row.last_painted_date || new Date().toISOString().split('T')[0],
             lastInspectedDate: row.last_inspected_date || null,
@@ -70,31 +73,19 @@ export const dbService = {
         };
       });
 
-      // Fusió: El servidor mana, però mantenim locals si no hi són al servidor encara
-      const mergedMap = new Map<string, PedestrianCrossing>();
-      
-      localData.forEach(item => mergedMap.set(item.id, item));
-      serverData.forEach(item => mergedMap.set(item.id, item));
-      
-      const combined = Array.from(mergedMap.values());
-      
-      // Actualitzem localStorage només amb metadata (sense imatges per estalviar espai)
+      // GUARDAR AGORA: Actualizamos localStorage con datos del servidor
       try {
-        const lightData = combined.map(item => ({
-          ...item,
-          image: '' // No guardem imatges a localStorage per evitar quota
-        }));
-        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(lightData));
-        console.log('💾 Dades guardades a localStorage (sense imatges)');
+        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(serverData));
+        console.log('💾 Sincronitzat:', serverData.length, 'elements a localStorage');
       } catch (storageError) {
-        console.warn('⚠️ No es pot guardar a localStorage (quota), continuant només amb servidor:', storageError);
+        console.warn('⚠️ localStorage quote exceeded, continuant amb dades servidor:', storageError);
       }
       
-      return combined.sort((a,b) => b.createdAt - a.createdAt);
+      // RETORNA els dades del servidor (sempre és la font de veritat)
+      return serverData.sort((a,b) => b.createdAt - a.createdAt);
 
     } catch (error) {
-      console.warn("Mode Offline actiu (error servidor o sense connexió):", error);
-      // En cas d'error, retornem el que tenim localment sense queixar-nos
+      console.warn("⚠️ Error sincronització Supabase (offline mode):", error);
       return localData.sort((a,b) => b.createdAt - a.createdAt);
     }
   },
@@ -162,45 +153,61 @@ export const dbService = {
   // --- REPORTS ---
 
   async getReports(): Promise<SavedReport[]> {
-    let finalReports: SavedReport[] = [];
-    let localReports: any[] = [];
+    let localReports: SavedReport[] = [];
 
+    // 1. Carregar locals com a fallback
     try {
       const localData = localStorage.getItem(REPORTS_STORAGE_KEY);
       if (localData) localReports = JSON.parse(localData);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error('Error carregant informes locals:', e); 
+    }
 
+    // 2. SEMPRE traer del servidor
     try {
+      console.log('🌐 Sincronitzant informes amb Supabase...');
       const { data, error } = await supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        const serverReports = data.map(r => ({
-          id: r.id,
-          title: r.title,
-          date: r.date,
-          type: r.type,
-          crossingIds: r.crossing_ids,
-          aiAnalysis: r.ai_analysis,
-          createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
-        }));
-        
-        // Merge simple
-        const serverIds = new Set(serverReports.map(r => r.id));
-        const unsyncedLocals = localReports.filter(r => !serverIds.has(r.id));
-        finalReports = [...unsyncedLocals, ...serverReports];
-        
-        localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(finalReports));
-      } else {
-         finalReports = localReports;
+      if (error) {
+        console.error('❌ Error Supabase informes:', error);
+        return localReports.sort((a, b) => b.createdAt - a.createdAt);
       }
-    } catch (error) {
-      finalReports = localReports;
-    }
 
-    return finalReports.sort((a, b) => b.createdAt - a.createdAt);
+      if (!data || data.length === 0) {
+        console.log('📭 Servidor informes buit');
+        return localReports.sort((a, b) => b.createdAt - a.createdAt);
+      }
+
+      const serverReports = data.map(r => ({
+        id: r.id,
+        title: r.title,
+        date: r.date,
+        type: r.type,
+        crossingIds: r.crossing_ids || [],
+        aiAnalysis: r.ai_analysis,
+        createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
+      }));
+      
+      console.log('✅ Sincronitzats', serverReports.length, 'informes');
+      
+      // GUARDAR: Actualizar localStorage
+      try {
+        localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(serverReports));
+        console.log('💾 Informes guardats a localStorage');
+      } catch (storageError) {
+        console.warn('⚠️ localStorage quote exceeded (informes):', storageError);
+      }
+
+      // RETORNA els dades del servidor (sempre és la font de veritat)
+      return serverReports.sort((a, b) => b.createdAt - a.createdAt);
+
+    } catch (error) {
+      console.warn('⚠️ Error sincronització informes:', error);
+      return localReports.sort((a, b) => b.createdAt - a.createdAt);
+    }
   },
 
   async saveReport(report: SavedReport): Promise<void> {
@@ -244,5 +251,72 @@ export const dbService = {
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(localReports.filter((r: SavedReport) => !ids.includes(r.id))));
       await supabase.from('reports').delete().in('id', ids);
     } catch (e) { console.error(e); }
+  },
+
+  // --- FORCE SYNC (Sincronització Manual) ---
+  async forceSync(): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log('⚡ Forçant sincronització...');
+      
+      // Carrega totes les dades del servidor
+      const [crossingsRes, reportsRes] = await Promise.all([
+        supabase.from('crossings').select('*').order('created_at', { ascending: false }),
+        supabase.from('reports').select('*').order('created_at', { ascending: false })
+      ]);
+
+      let syncedCrossings = 0;
+      let syncedReports = 0;
+
+      // Sincronitzar elements
+      if (!crossingsRes.error && crossingsRes.data) {
+        const serverData = crossingsRes.data.map(row => {
+          let loc = row.location;
+          if (typeof loc === 'string') {
+            try { loc = JSON.parse(loc); } catch (e) { loc = { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' }; }
+          }
+          return {
+            id: row.id,
+            assetType: (row.asset_type as AssetType) || AssetType.CROSSING,
+            image: row.image || '',
+            location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
+            state: (row.state as CrossingState) || CrossingState.GOOD,
+            lastPaintedDate: row.last_painted_date || new Date().toISOString().split('T')[0],
+            lastInspectedDate: row.last_inspected_date || null,
+            paintType: row.paint_type || 'Estàndard',
+            notes: row.notes || '',
+            createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now()
+          };
+        });
+        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(serverData));
+        syncedCrossings = serverData.length;
+      }
+
+      // Sincronitzar informes
+      if (!reportsRes.error && reportsRes.data) {
+        const serverReports = reportsRes.data.map(r => ({
+          id: r.id,
+          title: r.title,
+          date: r.date,
+          type: r.type,
+          crossingIds: r.crossing_ids || [],
+          aiAnalysis: r.ai_analysis,
+          createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
+        }));
+        localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(serverReports));
+        syncedReports = serverReports.length;
+      }
+
+      const message = `✅ Sincronitzat: ${syncedCrossings} elements, ${syncedReports} informes`;
+      console.log(message);
+      return { success: true, message };
+
+    } catch (error) {
+      const message = `❌ Error en sincronització: ${error}`;
+      console.error(message);
+      return { success: false, message };
+    }
   }
 };
+
+
