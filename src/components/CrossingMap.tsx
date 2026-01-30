@@ -133,7 +133,7 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
                   ✅ REVISAT: ${new Date(crossing.lastInspectedDate).toLocaleDateString('ca-ES')}
                 </p>` : ''}
                 <div style="width: 100%; height: 110px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; background: #f8fafc;">
-                  <img src="${crossing.image}" style="width:100%; height:100%; object-fit:cover;" />
+                  <img src="${crossing.image}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover;" />
                 </div>
                 <div style="display:flex; gap:8px; margin-top:12px;">
                    <button id="btn-check-${crossing.id}" style="flex:1; background:#10b981; color:white; border:none; padding:10px; border-radius:10px; font-weight:900; font-size:9px; cursor:pointer; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s;">
