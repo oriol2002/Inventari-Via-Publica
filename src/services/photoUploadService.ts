@@ -2,9 +2,13 @@ import type React from 'react';
 import exifr from 'exifr';
 import Compressor from 'compressorjs';
 import { supabase } from './dbService';
+import { firebaseDb, firebaseStorage } from './firebaseService';
+import { addDoc, collection } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 const BUCKET = 'photos';
 const OFFLINE_MODE = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
+const BACKEND = ((import.meta as any).env?.VITE_BACKEND as string) || 'supabase';
 
 interface ExifData {
   lat: number | null;
@@ -63,7 +67,7 @@ const compressImage = async (file: File, maxWidth: number, quality: number): Pro
 // Processar fitxer: EXIF + compressió + pujada + insert
 export const processFile = async (file: File, userId: string) => {
   if (OFFLINE_MODE) {
-    const error = new Error('Mode OFFLINE actiu: no es pujaran imatges a Supabase');
+    const error = new Error('Mode OFFLINE actiu: no es pujaran imatges');
     console.warn(error.message);
     return { success: false, error };
   }
@@ -82,10 +86,44 @@ export const processFile = async (file: File, userId: string) => {
     const compressed = await compressImage(file, 800, 0.7);
     const compressedThumb = await compressImage(file, 240, 0.6);
 
-    // 3) Pujar a Supabase Storage
+    // 3) Pujar a Storage
     const fileName = `${createUuid()}.webp`;
     const filePath = `photos/${fileName}`;
     const thumbPath = `photos/thumbs/${fileName}`;
+
+    if (BACKEND === 'firebase') {
+      const mainRef = ref(firebaseStorage, filePath);
+      const thumbRef = ref(firebaseStorage, thumbPath);
+
+      await uploadBytes(mainRef, compressed, {
+        contentType: compressed.type,
+        cacheControl: 'public,max-age=31536000,immutable'
+      } as any);
+      await uploadBytes(thumbRef, compressedThumb, {
+        contentType: compressedThumb.type,
+        cacheControl: 'public,max-age=31536000,immutable'
+      } as any);
+
+      const publicUrl = await getDownloadURL(mainRef);
+      const publicThumbUrl = await getDownloadURL(thumbRef);
+
+      await addDoc(collection(firebaseDb, 'incidencies_fotos'), {
+        photo_url: filePath,
+        thumb_url: thumbPath,
+        lat,
+        lng,
+        captured_at: capturedAt,
+        user_id: userId
+      });
+
+      return {
+        success: true,
+        path: filePath,
+        thumbPath,
+        publicUrl,
+        publicThumbUrl
+      };
+    }
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)

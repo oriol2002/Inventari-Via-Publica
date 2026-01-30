@@ -1,11 +1,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { PedestrianCrossing, AssetType, CrossingState, SavedReport } from '../types';
+import { firebaseDb } from './firebaseService';
+import { collection, doc, getDocs, orderBy, query, setDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 
 // Utilitzem les claus hardcoded com a fallback
 const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL as string || 'https://xnbvbcubteklfpabhbpl.supabase.co'; 
 const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhuYnZiY3VidGVrbGZwYWJoYnBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MTA1MDAsImV4cCI6MjA4NDk4NjUwMH0.d_lLFsDznEuJGSeKyFqpTlfCQzKjipg-qVnG_pO_Amw';
 const OFFLINE_MODE = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
+const BACKEND = ((import.meta as any).env?.VITE_BACKEND as string) || 'supabase';
 
 // EXPORTEM la instància perquè useAuth.tsx la pugui utilitzar
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -36,6 +39,48 @@ export const dbService = {
     if (OFFLINE_MODE) {
       console.warn('⚠️ Mode OFFLINE actiu: retornant dades locals');
       return localData.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    // 2b. Firebase backend
+    if (BACKEND === 'firebase') {
+      try {
+        const q = query(collection(firebaseDb, 'crossings'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const serverData: PedestrianCrossing[] = snapshot.docs.map(docSnap => {
+          const row: any = docSnap.data();
+          return {
+            id: row.id || docSnap.id,
+            assetType: (row.assetType as AssetType) || AssetType.CROSSING,
+            image: row.image || '',
+            imageThumb: row.imageThumb || '',
+            location: row.location || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
+            state: (row.state as CrossingState) || CrossingState.GOOD,
+            lastPaintedDate: row.lastPaintedDate || new Date().toISOString().split('T')[0],
+            lastInspectedDate: row.lastInspectedDate || null,
+            paintType: row.paintType || 'Estàndard',
+            notes: row.notes || '',
+            createdAt: row.createdAt || Date.now(),
+            updatedAt: row.updatedAt || Date.now(),
+            alertDismissed: row.alertDismissed || false,
+          };
+        });
+
+        try {
+          const lightData = serverData.map(item => ({
+            ...item,
+            image: '',
+            imageThumb: item.imageThumb || ''
+          }));
+          localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(lightData));
+        } catch (storageError) {
+          console.warn('⚠️ localStorage quote exceeded, continuant amb dades servidor:', storageError);
+        }
+
+        return serverData.sort((a, b) => b.createdAt - a.createdAt);
+      } catch (error) {
+        console.warn('⚠️ Error Firebase, retornant locals:', error);
+        return localData.sort((a, b) => b.createdAt - a.createdAt);
+      }
     }
 
     // 3. SEMPRE intentar carregar del servidor FIRST
@@ -120,6 +165,26 @@ export const dbService = {
     // 2. Enviar al Núvol (si no estem en offline)
     if (OFFLINE_MODE) return;
 
+    if (BACKEND === 'firebase') {
+      const payload = {
+        id: crossing.id,
+        assetType: crossing.assetType,
+        image: crossing.image,
+        imageThumb: crossing.imageThumb || null,
+        location: crossing.location,
+        state: crossing.state,
+        lastPaintedDate: crossing.lastPaintedDate,
+        lastInspectedDate: crossing.lastInspectedDate || null,
+        paintType: crossing.paintType || null,
+        notes: crossing.notes || '',
+        createdAt: crossing.createdAt,
+        updatedAt: crossing.updatedAt,
+        alertDismissed: crossing.alertDismissed || false
+      };
+      await setDoc(doc(firebaseDb, 'crossings', crossing.id), payload, { merge: true });
+      return;
+    }
+
     try {
       const payload = {
         id: crossing.id,
@@ -157,6 +222,15 @@ export const dbService = {
 
     if (OFFLINE_MODE) return;
 
+    if (BACKEND === 'firebase') {
+      const batch = writeBatch(firebaseDb);
+      ids.forEach(id => {
+        batch.delete(doc(firebaseDb, 'crossings', id));
+      });
+      await batch.commit();
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('crossings')
@@ -185,6 +259,36 @@ export const dbService = {
     if (OFFLINE_MODE) {
       console.warn('⚠️ Mode OFFLINE actiu: retornant informes locals');
       return localReports.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    if (BACKEND === 'firebase') {
+      try {
+        const q = query(collection(firebaseDb, 'reports'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const serverReports: SavedReport[] = snapshot.docs.map(docSnap => {
+          const r: any = docSnap.data();
+          return {
+            id: r.id || docSnap.id,
+            title: r.title,
+            date: r.date,
+            type: r.type,
+            crossingIds: r.crossingIds || [],
+            createdAt: r.createdAt || Date.now(),
+            aiAnalysis: r.aiAnalysis
+          };
+        });
+
+        try {
+          localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(serverReports));
+        } catch (storageError) {
+          console.warn('⚠️ localStorage quote exceeded (informes):', storageError);
+        }
+
+        return serverReports.sort((a, b) => b.createdAt - a.createdAt);
+      } catch (error) {
+        console.warn('⚠️ Error Firebase informes:', error);
+        return localReports.sort((a, b) => b.createdAt - a.createdAt);
+      }
     }
 
     // 3. SEMPRE traer del servidor
@@ -247,6 +351,19 @@ export const dbService = {
     // Server - intenta sincronitzar en background sense bloquear
     if (OFFLINE_MODE) return;
 
+    if (BACKEND === 'firebase') {
+      await setDoc(doc(firebaseDb, 'reports', report.id), {
+        id: report.id,
+        title: report.title,
+        date: report.date,
+        type: report.type,
+        crossingIds: report.crossingIds,
+        aiAnalysis: report.aiAnalysis || null,
+        createdAt: report.createdAt,
+      }, { merge: true });
+      return;
+    }
+
     try {
       await supabase.from('reports').upsert({
           id: report.id,
@@ -268,7 +385,11 @@ export const dbService = {
       const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(localReports.filter((r: SavedReport) => r.id !== id)));
       if (!OFFLINE_MODE) {
-        await supabase.from('reports').delete().eq('id', id);
+        if (BACKEND === 'firebase') {
+          await deleteDoc(doc(firebaseDb, 'reports', id));
+        } else {
+          await supabase.from('reports').delete().eq('id', id);
+        }
       }
     } catch (e) { console.error(e); }
   },
@@ -278,7 +399,13 @@ export const dbService = {
       const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(localReports.filter((r: SavedReport) => !ids.includes(r.id))));
       if (!OFFLINE_MODE) {
-        await supabase.from('reports').delete().in('id', ids);
+        if (BACKEND === 'firebase') {
+          const batch = writeBatch(firebaseDb);
+          ids.forEach(id => batch.delete(doc(firebaseDb, 'reports', id)));
+          await batch.commit();
+        } else {
+          await supabase.from('reports').delete().in('id', ids);
+        }
       }
     } catch (e) { console.error(e); }
   },
