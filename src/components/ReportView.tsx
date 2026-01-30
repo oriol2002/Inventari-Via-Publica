@@ -116,12 +116,9 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const day = String(now.getDate()).padStart(2, '0');
       const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const randomNum = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
       
-      // Format: MOB{random}{year}{month}{day}{hours}{minutes}{seconds}
-      const newId = `MOB${randomNum}${year}${month}${day}${hours}${minutes}${seconds}`;
+      // Format: MOB{year}{month}{day}{hours}
+      const newId = `MOB${year}${month}${day}${hours}`;
       setInternalId(newId);
     }
   }, [externalId]);

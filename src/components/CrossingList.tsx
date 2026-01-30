@@ -54,11 +54,11 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
   };
 
   const handleCardClick = (crossing: PedestrianCrossing, e: React.MouseEvent) => {
-    if (isSelectionMode) {
-      toggleSelection(crossing.id, e);
-    } else {
+    // Si no estem en mode selecció, obrim la fitxa
+    if (!isSelectionMode) {
       onEdit(crossing);
     }
+    // Si estem en mode selecció, no fem res (el checkbox ja gestiona el click)
   };
 
   const handleConfirmDelete = () => {
@@ -239,9 +239,15 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
               <div className="h-24 relative bg-slate-200 overflow-hidden">
                 <img src={crossing.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Vista" />
                 <div 
+                  onClick={(e) => {
+                    if (isSelectionMode) {
+                      e.stopPropagation();
+                      toggleSelection(crossing.id, e);
+                    }
+                  }}
                   className={`absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shadow-sm z-10 ${
                     isSelected ? 'bg-blue-600 border-white text-white' : 
-                    (isSelectionMode ? 'bg-white/90 border-blue-300 text-transparent' : 'bg-white/40 border-white text-transparent')
+                    (isSelectionMode ? 'bg-white/90 border-blue-300 text-transparent cursor-pointer hover:border-blue-500' : 'bg-white/40 border-white text-transparent')
                   }`}
                 >
                   <CheckIcon className="w-3 h-3 stroke-[4]" />
