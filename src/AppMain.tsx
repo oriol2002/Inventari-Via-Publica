@@ -218,7 +218,7 @@ const App: React.FC = () => {
       }`}
     >
       <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" />
-      <span className="hidden sm:inline">{label}</span>
+      <span>{label}</span>
     </button>
   );
 
