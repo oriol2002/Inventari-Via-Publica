@@ -44,76 +44,61 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     }
 
     try {
-      const pages = Array.from(reportRef.current.querySelectorAll('.a4-page')) as HTMLElement[];
-      const targets = pages.length > 0 ? pages : [reportRef.current];
-
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4'
       });
 
-      const imgWidth = 210; // A4 width in mm
-      let isFirstPage = true;
+      // Use html2canvas only on a simplified version
+      const clonedReport = reportRef.current.cloneNode(true) as HTMLElement;
+      
+      // Remove problematic elements
+      const charts = clonedReport.querySelectorAll('[class*="recharts"]');
+      charts.forEach(chart => {
+        const parent = chart.parentElement;
+        if (parent) {
+          const text = document.createElement('div');
+          text.textContent = '[Gràfica]';
+          text.style.padding = '20px';
+          text.style.backgroundColor = '#f0f0f0';
+          text.style.textAlign = 'center';
+          parent.replaceChild(text, chart);
+        }
+      });
 
-      for (const target of targets) {
-        const canvas = await html2canvas(target, {
+      // Create temporary container
+      const temp = document.createElement('div');
+      temp.style.position = 'absolute';
+      temp.style.left = '-9999px';
+      temp.style.width = '210mm';
+      temp.style.backgroundColor = 'white';
+      temp.appendChild(clonedReport);
+      document.body.appendChild(temp);
+
+      try {
+        const canvas = await html2canvas(temp, {
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
           allowTaint: true,
-          imageTimeout: 15000,
-          scrollX: 0,
-          scrollY: -window.scrollY,
-          onclone: (clonedDoc: Document) => {
-            // Strip unsupported CSS from all elements
-            const allElements = Array.from(clonedDoc.querySelectorAll('*'));
-            allElements.forEach((el: any) => {
-              if (el.style && el.style.cssText) {
-                el.style.cssText = el.style.cssText
-                  .replace(/okch\([^)]+\)/g, '#000000')
-                  .replace(/color\([^)]+\)/g, '#000000')
-                  .replace(/--[\w-]+:\s*okch\([^)]+\)/g, '--fallback: #000000');
-              }
-            });
-
-            // Also strip from style tags
-            const styles = Array.from(clonedDoc.querySelectorAll('style'));
-            styles.forEach((style) => {
-              if (style.textContent) {
-                style.textContent = style.textContent
-                  .replace(/okch\([^)]+\)/g, '#000000')
-                  .replace(/color\([^)]+\)/g, '#000000');
-              }
-            });
-
-            // Handle cross-origin images
-            const imgs = Array.from(clonedDoc.querySelectorAll('img')) as HTMLImageElement[];
-            imgs.forEach((img) => {
-              const src = img.getAttribute('src') || '';
-              const isExternal = src.startsWith('http') && !src.startsWith(window.location.origin);
-              if (isExternal) {
-                img.removeAttribute('src');
-                img.style.background = '#e2e8f0';
-                img.style.minHeight = img.style.minHeight || '200px';
-              }
-            });
-          }
+          imageTimeout: 5000,
+          windowWidth: 794, // A4 width in pixels
+          removeContainer: false
         });
 
         const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 210; // A4 width in mm
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        if (!isFirstPage) {
-          pdf.addPage();
-        }
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        isFirstPage = false;
-      }
 
-      const filename = `${reportTitle?.replace(/\s+/g, '_') || 'informe'}.pdf`;
-      pdf.save(filename);
+        const filename = `${internalId}_${city}.pdf`;
+        pdf.save(filename);
+      } finally {
+        document.body.removeChild(temp);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error al generar el PDF. Intenta de nou.');
@@ -125,12 +110,17 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       setInternalId(externalId);
     } else {
       const now = new Date();
-      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const storageKey = `report_counter_${dateStr}`;
-      const currentCount = parseInt(localStorage.getItem(storageKey) || '-1');
-      const newCount = currentCount + 1;
-      localStorage.setItem(storageKey, newCount.toString());
-      setInternalId(`${dateStr}${String(newCount).padStart(2, '0')}`);
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const randomNum = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+      
+      // Format: MOB{random}{year}{month}{day}{hours}{minutes}{seconds}
+      const newId = `MOB${randomNum}${year}${month}${day}${hours}${minutes}${seconds}`;
+      setInternalId(newId);
     }
   }, [externalId]);
 
