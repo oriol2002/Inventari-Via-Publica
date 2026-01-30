@@ -62,12 +62,23 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          allowTaint: false,
+          allowTaint: true,
           imageTimeout: 15000,
           scrollX: 0,
           scrollY: -window.scrollY,
           onclone: (clonedDoc: Document) => {
-            // Remove unsupported CSS rules with okch() color functions
+            // Strip unsupported CSS from all elements
+            const allElements = Array.from(clonedDoc.querySelectorAll('*'));
+            allElements.forEach((el: any) => {
+              if (el.style && el.style.cssText) {
+                el.style.cssText = el.style.cssText
+                  .replace(/okch\([^)]+\)/g, '#000000')
+                  .replace(/color\([^)]+\)/g, '#000000')
+                  .replace(/--[\w-]+:\s*okch\([^)]+\)/g, '--fallback: #000000');
+              }
+            });
+
+            // Also strip from style tags
             const styles = Array.from(clonedDoc.querySelectorAll('style'));
             styles.forEach((style) => {
               if (style.textContent) {
