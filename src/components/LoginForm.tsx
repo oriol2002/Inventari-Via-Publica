@@ -9,8 +9,8 @@ export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
-    await loginWithGoogle();
-    navigate('/');
+    const ok = await loginWithGoogle();
+    if (ok) navigate('/');
   };
 
   return (

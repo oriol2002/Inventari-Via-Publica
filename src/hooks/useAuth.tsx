@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
   error: string | null;
 }
@@ -35,16 +35,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (): Promise<boolean> => {
     setError(null);
     if (OFFLINE_MODE) {
       setError('Mode offline actiu. No es pot iniciar sessió.');
-      return;
+      return false;
     }
     try {
       await signInWithPopup(firebaseAuth, googleProvider);
+      return true;
     } catch (e: any) {
       setError(e?.message || 'Error en login amb Google');
+      return false;
     }
   };
 
