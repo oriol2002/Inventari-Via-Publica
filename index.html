@@ -11,12 +11,40 @@
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
     <script>
-      // Register Service Worker
+      // Register Service Worker with update check
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(() => {
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
           console.log('Service Worker registered');
+          
+          // Check for updates every time the page loads
+          registration.update();
+          
+          // If there's a waiting worker, activate it immediately
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          
+          // Listen for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker available, reload the page
+                  console.log('New service worker available, reloading...');
+                  window.location.reload();
+                }
+              });
+            }
+          });
         }).catch((error) => {
           console.log('Service Worker registration failed:', error);
+        });
+        
+        // Reload if a new service worker takes control
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('New service worker activated, reloading...');
+          window.location.reload();
         });
       }
     </script>

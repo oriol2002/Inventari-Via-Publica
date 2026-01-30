@@ -99,6 +99,25 @@ const App: React.FC = () => {
     }
   };
   
+  const handleDismissAlert = async (id: string) => {
+    const crossing = crossings.find(c => c.id === id);
+    if (!crossing) return;
+
+    const updatedCrossing = {
+      ...crossing,
+      alertDismissed: true,
+      updatedAt: Date.now()
+    };
+
+    setCrossings(prev => prev.map(c => c.id === id ? updatedCrossing : c));
+
+    try {
+      await dbService.save(updatedCrossing);
+    } catch (error) {
+      console.error("Error marcant alerta com a llegida:", error);
+    }
+  };
+  
   const handleQuickUpdate = async (id: string, updates: Partial<PedestrianCrossing>) => {
     const crossingToUpdate = crossings.find(c => c.id === id);
     if (!crossingToUpdate) return;
@@ -210,6 +229,9 @@ const App: React.FC = () => {
   }, [crossings, filters]);
 
   const alerts = filteredCrossings.filter(c => {
+    // Excloure elements marcats com a llegits
+    if (c.alertDismissed) return false;
+    
     const lastCheck = c.lastInspectedDate && c.lastInspectedDate > c.lastPaintedDate ? c.lastInspectedDate : c.lastPaintedDate;
     const months = notificationService.calculateMonthsSince(lastCheck);
     
@@ -413,6 +435,8 @@ const App: React.FC = () => {
               onSubmit={handleSaveCrossing} 
               city="Tortosa"
               onImageCapture={() => setHasImageInForm(true)}
+              fromAlert={!!editingCrossing && alerts.some(a => a.id === editingCrossing.id)}
+              onDismissAlert={handleDismissAlert}
             />
           </div>
         </div>

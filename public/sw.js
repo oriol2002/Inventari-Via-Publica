@@ -1,17 +1,6 @@
-const CACHE_NAME = 'mobilitat-tortosa-v2';
+const CACHE_NAME = 'mobilitat-tortosa-v4';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Cache solo assets estáticos, no HTML
-      return cache.addAll([
-        './manifest.json'
-      ]);
-    }).catch(() => {
-      // Si falla el install, continuar
-      return Promise.resolve();
-    })
-  );
   // Force activate immediately
   self.skipWaiting();
 });
@@ -21,36 +10,72 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          // Delete ALL old caches
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      // Take control of all clients immediately
+      return self.clients.claim();
     })
   );
-  // Take control immediately
-  self.clients.matchAll().then((clients) => {
-    clients.forEach((client) => {
-      client.navigate(client.url);
-    });
-  });
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network first for HTML
-  if (event.request.url.includes('.html') || event.request.url.endsWith('/')) {
+  const { request } = event;
+  
+  // For API requests and HTML, always go network-first
+  if (request.url.includes('/api/') || 
+      request.url.includes('supabase.co') ||
+      request.mode === 'navigate' ||
+      request.destination === 'document') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(event.request);
-      })
+      fetch(request)
+        .then(response => {
+          // Don't cache API responses
+          return response;
+        })
+        .catch(() => {
+          // Offline fallback for navigation
+          if (request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return new Response('Network error', { status: 503 });
+        })
     );
-    return;
+  } else {
+    // For static assets, use cache-first with network fallback
+    event.respondWith(
+      caches.match(request)
+        .then(cached => {
+          if (cached) {
+            // Return cached but also fetch fresh in background
+            fetch(request).then(response => {
+              if (response.ok) {
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(request, response);
+                });
+              }
+            });
+            return cached;
+          }
+          // Not in cache, fetch from network
+          return fetch(request).then(response => {
+            if (response.ok) {
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(request, response);
+              });
+            }
+            return response;
+          });
+        })
+    );
   }
+});
 
-  // Cache first para otros assets
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+// Listen for skip waiting message
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

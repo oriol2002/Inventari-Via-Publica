@@ -46,6 +46,7 @@ export interface PedestrianCrossing {
   notes?: string;
   createdAt: number;
   updatedAt: number;
+  alertDismissed?: boolean; // Marca si l'alerta ha estat llegida i descartada
 }
 
 export interface FilterOptions {

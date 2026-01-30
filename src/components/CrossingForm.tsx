@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as L from 'leaflet';
 import { CameraIcon, PhotoIcon, MapPinIcon, XMarkIcon, PencilIcon, GlobeEuropeAfricaIcon, Square2StackIcon, MagnifyingGlassIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { CrossingState, PedestrianCrossing, Location, AssetType, TORTOSA_BARRIS, TORTOSA_PEDANIES, TORTOSA_POLIGONS } from '../types';
 import ImageEditor from './ImageEditor';
 
@@ -11,9 +12,11 @@ interface Props {
   onSubmit: (c: PedestrianCrossing) => void;
   city: string;
   onImageCapture?: () => void;
+  fromAlert?: boolean;
+  onDismissAlert?: (id: string) => void;
 }
 
-const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture }) => {
+const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert }) => {
   const [image, setImage] = useState<string | null>(initialData?.image || null);
   const [location, setLocation] = useState<Location | null>(initialData?.location || null);
   const [state, setState] = useState<CrossingState>(initialData?.state || CrossingState.GOOD);
@@ -41,6 +44,15 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const shouldRecenter = useRef(true);
 
   const STREET_NEIGHBORHOOD_KEY = 'mobilitat_street_neighborhood_map';
+
+  const handleDismissAlert = () => {
+    if (initialData?.id && onDismissAlert) {
+      if (confirm('Marcar aquesta alerta com a llegida? No apareixerà a les alertes.')) {
+        onDismissAlert(initialData.id);
+        onClose();
+      }
+    }
+  };
 
   const normalizeStreet = (street?: string) => (street || '').trim().toLowerCase();
 
@@ -448,7 +460,20 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
             </span>
           )}
         </div>
-        <button onClick={onClose} className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-all"><XMarkIcon className="w-5 h-5" /></button>
+        <div className="flex items-center gap-2">
+          {fromAlert && initialData && !initialData.alertDismissed && (
+            <button 
+              type="button"
+              onClick={handleDismissAlert} 
+              className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl transition-all border border-emerald-200 flex items-center gap-2"
+              title="Marcar com a llegit"
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Llegit</span>
+            </button>
+          )}
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-all"><XMarkIcon className="w-5 h-5" /></button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-4">
