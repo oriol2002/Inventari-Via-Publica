@@ -22,3 +22,25 @@ code {
   width: 100%;
   height: 100%;
 }
+
+/* Print styles - hide everything except report */
+@media print {
+  * {
+    display: none;
+  }
+  
+  .report-overlay,
+  .report-overlay * {
+    display: block !important;
+  }
+  
+  .a4-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  
+  body, html, #root {
+    margin: 0;
+    padding: 0;
+  }
+}
