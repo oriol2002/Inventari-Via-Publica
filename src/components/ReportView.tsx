@@ -333,12 +333,12 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button 
-            onClick={() => window.print()} 
+          <button
+            onClick={generatePDF}
             className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95"
           >
             <PrinterIcon className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Imprimir / Desar PDF</span>
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
             <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
           </button>
         </div>
