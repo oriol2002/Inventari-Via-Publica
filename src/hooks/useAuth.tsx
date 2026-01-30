@@ -3,6 +3,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/dbService';
 import { Session, User } from '@supabase/supabase-js';
 
+const OFFLINE_MODE = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
+const BACKEND = ((import.meta as any).env?.VITE_BACKEND as string) || 'supabase';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -83,6 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     setError(null);
+    if (OFFLINE_MODE || BACKEND === 'firebase') {
+      setError('Login amb Google desactivat temporalment. Fes servir email/contrasenya.');
+      return;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

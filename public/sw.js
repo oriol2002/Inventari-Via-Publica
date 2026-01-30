@@ -24,6 +24,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
+  // No cachejar peticions no-GET (evita errors amb POST/PUT)
+  if (request.method !== 'GET') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // Cache-first for images (incloses les de Supabase)
   if (request.destination === 'image') {
     event.respondWith(
@@ -32,8 +38,9 @@ self.addEventListener('fetch', (event) => {
           if (cached) return cached;
           return fetch(request).then(response => {
             if (response.ok) {
+              const responseClone = response.clone();
               caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, response);
+                cache.put(request, responseClone);
               });
             }
             return response;
@@ -68,8 +75,9 @@ self.addEventListener('fetch', (event) => {
         if (cached) {
           fetch(request).then(response => {
             if (response.ok) {
+              const responseClone = response.clone();
               caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, response);
+                cache.put(request, responseClone);
               });
             }
           });
@@ -77,8 +85,9 @@ self.addEventListener('fetch', (event) => {
         }
         return fetch(request).then(response => {
           if (response.ok) {
+            const responseClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, response);
+              cache.put(request, responseClone);
             });
           }
           return response;

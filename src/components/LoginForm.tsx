@@ -10,6 +10,9 @@ export const LoginForm: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const { login, signup, loginWithGoogle, isLoading, error } = useAuth();
+  const offlineMode = (import.meta as any).env?.VITE_OFFLINE_MODE === 'true';
+  const backend = ((import.meta as any).env?.VITE_BACKEND as string) || 'supabase';
+  const googleDisabled = offlineMode || backend === 'firebase';
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,8 +134,7 @@ export const LoginForm: React.FC = () => {
             {isLoading ? 'Processant...' : (isSignup ? 'Crear Compte' : 'Accedir')}
           </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
+          <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-slate-200"></div>
             <span className="text-xs text-slate-500 uppercase font-bold">O</span>
             <div className="flex-1 h-px bg-slate-200"></div>
@@ -142,8 +144,13 @@ export const LoginForm: React.FC = () => {
           <button
             type="button"
             onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full bg-white border border-slate-200 text-slate-900 py-3 rounded-xl font-black uppercase text-sm tracking-widest hover:bg-slate-50 disabled:opacity-50 transition-all"
+            disabled={googleDisabled || isLoading}
+            className={`w-full py-3 rounded-xl font-black uppercase text-sm tracking-widest border transition-colors ${
+              googleDisabled
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                : 'bg-white text-slate-900 border-slate-200 hover:bg-slate-50'
+            } ${isLoading ? 'opacity-50' : ''}`}
+            title={googleDisabled ? 'Login Google desactivat temporalment' : 'Login amb Google'}
           >
             🔐 Login amb Google
           </button>
