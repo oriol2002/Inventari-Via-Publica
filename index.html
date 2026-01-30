@@ -10,5 +10,15 @@
 <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
+    <script>
+      // Register Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(() => {
+          console.log('Service Worker registered');
+        }).catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+      }
+    </script>
 </body>
 </html>
