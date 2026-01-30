@@ -73,10 +73,14 @@ export const dbService = {
         };
       });
 
-      // GUARDAR AGORA: Actualizamos localStorage con datos del servidor
+      // GUARDAR METADATA (sense imatges) per estalviar espai
       try {
-        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(serverData));
-        console.log('💾 Sincronitzat:', serverData.length, 'elements a localStorage');
+        const lightData = serverData.map(item => ({
+          ...item,
+          image: '' // NO guardem imatges a localStorage (massa pesades)
+        }));
+        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(lightData));
+        console.log('💾 Metadata sincronitzada (sense imatges)');
       } catch (storageError) {
         console.warn('⚠️ localStorage quote exceeded, continuant amb dades servidor:', storageError);
       }
@@ -258,7 +262,16 @@ export const dbService = {
     try {
       console.log('⚡ Forçant sincronització...');
       
-      // Carrega totes les dades del servidor
+      // 1. PRIMER: Esborrar localStorage per evitar QuotaExceededError
+      try {
+        localStorage.removeItem(CROSSINGS_STORAGE_KEY);
+        localStorage.removeItem(REPORTS_STORAGE_KEY);
+        console.log('🗑️ localStorage esborrat');
+      } catch (e) {
+        console.warn('Error esborrant localStorage:', e);
+      }
+      
+      // 2. Carrega totes les dades del servidor
       const [crossingsRes, reportsRes] = await Promise.all([
         supabase.from('crossings').select('*').order('created_at', { ascending: false }),
         supabase.from('reports').select('*').order('created_at', { ascending: false })
@@ -288,7 +301,13 @@ export const dbService = {
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now()
           };
         });
-        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(serverData));
+        
+        // Guardar sense imatges per evitar QuotaExceededError
+        const lightData = serverData.map(item => ({
+          ...item,
+          image: '' // NO guardem imatges
+        }));
+        localStorage.setItem(CROSSINGS_STORAGE_KEY, JSON.stringify(lightData));
         syncedCrossings = serverData.length;
       }
 
