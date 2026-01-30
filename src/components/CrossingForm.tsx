@@ -4,6 +4,7 @@ import * as L from 'leaflet';
 import { CameraIcon, PhotoIcon, MapPinIcon, XMarkIcon, PencilIcon, GlobeEuropeAfricaIcon, Square2StackIcon, MagnifyingGlassIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { CrossingState, PedestrianCrossing, Location, AssetType, TORTOSA_BARRIS, TORTOSA_PEDANIES, TORTOSA_POLIGONS } from '../types';
+import { processFile } from '../services/photoUploadService';
 import ImageEditor from './ImageEditor';
 
 interface Props {
@@ -14,9 +15,10 @@ interface Props {
   onImageCapture?: () => void;
   fromAlert?: boolean;
   onDismissAlert?: (id: string) => void;
+  userId?: string;
 }
 
-const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert }) => {
+const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert, userId }) => {
   const [image, setImage] = useState<string | null>(initialData?.image || null);
   const [location, setLocation] = useState<Location | null>(initialData?.location || null);
   const [state, setState] = useState<CrossingState>(initialData?.state || CrossingState.GOOD);
@@ -329,17 +331,32 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
 
   const handleUpdateGPS = handleCenterOnUser;
 
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      try {
+        if (!userId) {
+          console.warn('No hi ha userId. Es guardarà la imatge localment.');
+        } else {
+          // Pujar imatge comprimida + guardar EXIF a incidencies_fotos
+          const result = await processFile(file, userId);
+          if (result.success && result.publicUrl) {
+            setImage(result.publicUrl);
+            if (onImageCapture) onImageCapture();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error en pujada d\'imatge:', error);
+      }
+
+      // Fallback: preview local si falla la pujada
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result as string);
         if (onImageCapture) onImageCapture();
       };
       reader.readAsDataURL(file);
-      // No cridem handleCenterOnUser aquí automàticament per no solapar amb l'efecte inicial,
-      // l'efecte inicial ja s'encarregarà de buscar la posició si cal.
     }
   };
 

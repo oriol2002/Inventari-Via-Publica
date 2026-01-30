@@ -28,6 +28,7 @@ import {
 } from '@heroicons/react/24/solid';
 
 const App: React.FC = () => {
+  const { user, logout } = useAuth();
   const [crossings, setCrossings] = useState<PedestrianCrossing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -443,6 +444,7 @@ const App: React.FC = () => {
               onImageCapture={() => setHasImageInForm(true)}
               fromAlert={!!editingCrossing && alerts.some(a => a.id === editingCrossing.id)}
               onDismissAlert={handleDismissAlert}
+              userId={user?.id}
             />
           </div>
         </div>
