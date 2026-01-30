@@ -17,6 +17,76 @@ const REPORTS_STORAGE_KEY = 'mobilitat_reports';
 const CROSSINGS_STORAGE_KEY = 'mobilitat_elements';
 
 export const dbService = {
+  async migrateLocalToFirebase(): Promise<{ success: boolean; message: string }> {
+    if (OFFLINE_MODE) {
+      return { success: false, message: 'Mode offline actiu: no es pot migrar.' };
+    }
+    if (BACKEND !== 'firebase') {
+      return { success: false, message: 'Backend no és Firebase.' };
+    }
+
+    try {
+      const localCrossingsRaw = localStorage.getItem(CROSSINGS_STORAGE_KEY);
+      const localReportsRaw = localStorage.getItem(REPORTS_STORAGE_KEY);
+      const localCrossings: PedestrianCrossing[] = localCrossingsRaw ? JSON.parse(localCrossingsRaw) : [];
+      const localReports: SavedReport[] = localReportsRaw ? JSON.parse(localReportsRaw) : [];
+
+      const chunks = (arr: any[], size: number) => {
+        const res: any[][] = [];
+        for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+        return res;
+      };
+
+      // Migrar crossings (per lots de 400)
+      const crossingChunks = chunks(localCrossings, 400);
+      for (const chunk of crossingChunks) {
+        const batch = writeBatch(firebaseDb);
+        chunk.forEach((c) => {
+          const payload = {
+            id: c.id,
+            assetType: c.assetType,
+            image: c.image || '',
+            imageThumb: c.imageThumb || '',
+            location: c.location,
+            state: c.state,
+            lastPaintedDate: c.lastPaintedDate,
+            lastInspectedDate: c.lastInspectedDate || null,
+            paintType: c.paintType || null,
+            notes: c.notes || '',
+            createdAt: c.createdAt || Date.now(),
+            updatedAt: c.updatedAt || Date.now(),
+            alertDismissed: c.alertDismissed || false
+          };
+          batch.set(doc(firebaseDb, 'crossings', c.id), payload, { merge: true });
+        });
+        await batch.commit();
+      }
+
+      // Migrar reports (per lots de 400)
+      const reportChunks = chunks(localReports, 400);
+      for (const chunk of reportChunks) {
+        const batch = writeBatch(firebaseDb);
+        chunk.forEach((r) => {
+          const payload = {
+            id: r.id,
+            title: r.title,
+            date: r.date,
+            type: r.type,
+            crossingIds: r.crossingIds || [],
+            aiAnalysis: r.aiAnalysis || null,
+            createdAt: r.createdAt || Date.now()
+          };
+          batch.set(doc(firebaseDb, 'reports', r.id), payload, { merge: true });
+        });
+        await batch.commit();
+      }
+
+      return { success: true, message: 'Migració local → Firebase completada.' };
+    } catch (error) {
+      console.error('Error migració a Firebase:', error);
+      return { success: false, message: 'Error durant la migració.' };
+    }
+  },
   // --- ELEMENTS (CROSSINGS) - OFFLINE FIRST ---
   
   async getAll(): Promise<PedestrianCrossing[]> {

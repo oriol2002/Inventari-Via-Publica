@@ -29,6 +29,7 @@ import {
 
 const App: React.FC = () => {
   const { user, logout } = useAuth();
+  const backend = ((import.meta as any).env?.VITE_BACKEND as string) || 'supabase';
   const [crossings, setCrossings] = useState<PedestrianCrossing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -51,6 +52,14 @@ const App: React.FC = () => {
       fetchData();
     }
     setIsSyncing(false);
+  };
+
+  const handleMigrateLocal = async () => {
+    const result = await dbService.migrateLocalToFirebase();
+    alert(result.message);
+    if (result.success) {
+      fetchData();
+    }
   };
 
   const fetchData = async () => {
@@ -290,6 +299,15 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
+            {backend === 'firebase' && (
+              <button
+                onClick={handleMigrateLocal}
+                className="px-3 md:px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
+                title="Migrar dades locals a Firebase"
+              >
+                Migrar
+              </button>
+            )}
             {/* Botó Sincronització */}
             <button 
               onClick={handleForceSync}
