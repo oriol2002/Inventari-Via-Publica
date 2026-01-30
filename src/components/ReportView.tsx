@@ -38,18 +38,27 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
   const reportRef = useRef<HTMLDivElement>(null);
 
   const generatePDF = async () => {
-    if (!reportRef.current) return;
+    if (!reportRef.current) {
+      alert('Error: No s\'ha pogut trobar l\'informe per descarregar.');
+      return;
+    }
     
     try {
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        allowTaint: true
       });
       
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
@@ -170,7 +179,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           </div>
         </header>
 
-        <div id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
+        <div ref={reportRef} id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
           <div className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
             {/* Pàgina 1 Estadístiques */}
             <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
@@ -332,8 +341,8 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
         </div>
       </header>
 
-      <div id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
-        <div ref={reportRef} className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
+      <div ref={reportRef} id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
+        <div className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
           
           {/* PORTADA */}
           <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0">
