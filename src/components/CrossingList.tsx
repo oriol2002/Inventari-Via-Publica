@@ -54,11 +54,7 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
   };
 
   const handleCardClick = (crossing: PedestrianCrossing, e: React.MouseEvent) => {
-    // Si no estem en mode selecció, obrim la fitxa
-    if (!isSelectionMode) {
-      onEdit(crossing);
-    }
-    // Si estem en mode selecció, no fem res (el checkbox ja gestiona el click)
+    onEdit(crossing);
   };
 
   const handleConfirmDelete = () => {
