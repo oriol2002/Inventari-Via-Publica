@@ -42,38 +42,41 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       alert('Error: No s\'ha pogut trobar l\'informe per descarregar.');
       return;
     }
-    
+
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        allowTaint: true
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
+      const pages = Array.from(reportRef.current.querySelectorAll('.a4-page')) as HTMLElement[];
+      const targets = pages.length > 0 ? pages : [reportRef.current];
+
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'mm',
         format: 'a4'
       });
-      
+
       const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      while (heightLeft >= 0) {
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297; // A4 height in mm
-        position += 297;
-        if (heightLeft > 0) {
+      let isFirstPage = true;
+
+      for (const target of targets) {
+        const canvas = await html2canvas(target, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          allowTaint: true,
+          scrollX: 0,
+          scrollY: -window.scrollY
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (!isFirstPage) {
           pdf.addPage();
         }
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        isFirstPage = false;
       }
-      
+
       const filename = `${reportTitle?.replace(/\s+/g, '_') || 'informe'}.pdf`;
       pdf.save(filename);
     } catch (error) {
