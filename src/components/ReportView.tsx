@@ -18,6 +18,8 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface Props {
   crossings: PedestrianCrossing[];
@@ -34,6 +36,42 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b'
 const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, onBack, city, aiAnalysis }) => {
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
+
+  const generatePDF = async () => {
+    if (!reportRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      while (heightLeft >= 0) {
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297; // A4 height in mm
+        position += 297;
+        if (heightLeft > 0) {
+          pdf.addPage();
+        }
+      }
+      
+      const filename = `${reportTitle?.replace(/\s+/g, '_') || 'informe'}.pdf`;
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error al generar el PDF. Intenta de nou.');
+    }
+  };
 
   useEffect(() => {
     if (externalId) {
@@ -124,9 +162,9 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+            <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
               <PrinterIcon className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Imprimir / PDF</span>
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
               <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
             </button>
           </div>
