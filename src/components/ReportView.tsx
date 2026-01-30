@@ -62,9 +62,22 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          allowTaint: true,
+          allowTaint: false,
+          imageTimeout: 15000,
           scrollX: 0,
-          scrollY: -window.scrollY
+          scrollY: -window.scrollY,
+          onclone: (clonedDoc: Document) => {
+            const imgs = Array.from(clonedDoc.querySelectorAll('img')) as HTMLImageElement[];
+            imgs.forEach((img) => {
+              const src = img.getAttribute('src') || '';
+              const isExternal = src.startsWith('http') && !src.startsWith(window.location.origin);
+              if (isExternal) {
+                img.removeAttribute('src');
+                img.style.background = '#e2e8f0';
+                img.style.minHeight = img.style.minHeight || '200px';
+              }
+            });
+          }
         });
 
         const imgData = canvas.toDataURL('image/png');
