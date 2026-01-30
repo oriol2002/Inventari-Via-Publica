@@ -22,7 +22,7 @@ code {
   width: 100%;
   height: 100%;
 }
-/* Print styles */
+/* Print styles - solo para navegador nativo print */
 @media print {
   * {
     -webkit-print-color-adjust: exact;
@@ -37,53 +37,6 @@ code {
     background: white;
   }
 
-  #root {
-    margin: 0;
-    padding: 0;
-    height: auto;
-    background: white;
-  }
-
-  /* Hide everything by default */
-  body > * {
-    display: none !important;
-  }
-
-  /* Show only root */
-  #root {
-    display: block !important;
-  }
-
-  /* Hide overlay container styling, show content */
-  .report-overlay {
-    position: static !important;
-    display: block !important;
-    overflow: visible !important;
-    background: white !important;
-    z-index: auto !important;
-    width: 100%;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Hide the header */
-  .report-overlay > header {
-    display: none !important;
-  }
-
-  /* Show the report container */
-  #report-container-div {
-    display: block !important;
-    position: static !important;
-    overflow: visible !important;
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100%;
-    height: auto;
-  }
-
-  /* A4 pages */
   .a4-page {
     page-break-after: always;
     page-break-inside: avoid;
@@ -94,50 +47,29 @@ code {
     background: white;
     box-shadow: none;
     overflow: hidden;
-    display: block !important;
   }
 
   .a4-page:last-child {
     page-break-after: avoid;
   }
 
-  /* Container div inside report */
-  #report-container-div > div {
-    display: block !important;
-  }
-
-  /* Report items */
   .report-item-card {
     page-break-inside: avoid;
-    display: block !important;
   }
 
-  /* Hide animations and transitions */
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  /* Force SVG and images to render */
   svg {
     max-width: 100%;
     height: auto;
-    display: block !important;
   }
 
   img {
     max-width: 100%;
     height: auto;
-    display: block !important;
   }
 
-  /* Hide scrollbars */
-  ::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Ensure text is visible */
-  body {
-    color: black;
+  * {
+    animation: none !important;
+    transition: none !important;
   }
 }
+
