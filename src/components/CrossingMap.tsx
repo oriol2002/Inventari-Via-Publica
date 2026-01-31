@@ -130,6 +130,9 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
                 <p style="margin:0 0 10px 0; color:#94a3b8; font-weight:800; font-size:8px; text-transform: uppercase;">
                   ACTUALITZAT: ${new Date(crossing.updatedAt).toLocaleDateString('ca-ES')} · ${new Date(crossing.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
                 </p>
+                <p style="margin:-6px 0 10px 0; color:#94a3b8; font-weight:800; font-size:8px; text-transform: uppercase;">
+                  USUARI: ${(crossing.updatedBy || crossing.createdBy || 'Usuari')}
+                </p>
                 <div style="width: 100%; height: 110px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; background: #f8fafc;">
                   <img src="${crossing.imageThumb || crossing.image}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover;" />
                 </div>

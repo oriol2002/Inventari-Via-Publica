@@ -335,6 +335,9 @@ const DataExplorer: React.FC<Props> = ({ crossings, currentFilters, onFilterChan
                         <span className="text-[8px] font-bold text-slate-400">
                           {new Date(c.updatedAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })} · {new Date(c.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
                         </span>
+                        <span className="text-[8px] font-bold text-slate-400">
+                          {c.updatedBy || c.createdBy || 'Usuari'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-2 py-3 text-center">

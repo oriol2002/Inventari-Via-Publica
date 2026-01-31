@@ -132,6 +132,8 @@ export const dbService = {
             updatedAt: row.updatedAt || Date.now(),
             alertDismissed: row.alertDismissed || false,
             accessGroups: row.accessGroups || row.access_groups || undefined,
+            createdBy: row.createdBy || row.created_by || undefined,
+            updatedBy: row.updatedBy || row.updated_by || undefined,
           };
         });
 
@@ -192,7 +194,9 @@ export const dbService = {
             notes: row.notes || '',
             createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
-            accessGroups: row.access_groups || undefined
+            accessGroups: row.access_groups || undefined,
+            createdBy: row.created_by || undefined,
+            updatedBy: row.updated_by || undefined
         };
       });
 
@@ -248,7 +252,9 @@ export const dbService = {
         createdAt: crossing.createdAt,
         updatedAt: crossing.updatedAt,
         alertDismissed: crossing.alertDismissed || false,
-        accessGroups: crossing.accessGroups || null
+        accessGroups: crossing.accessGroups || null,
+        createdBy: crossing.createdBy || null,
+        updatedBy: crossing.updatedBy || null
       };
       await setDoc(doc(firebaseDb, 'crossings', crossing.id), payload, { merge: true });
       return;
@@ -342,7 +348,8 @@ export const dbService = {
             type: r.type,
             crossingIds: r.crossingIds || [],
             createdAt: r.createdAt || Date.now(),
-            aiAnalysis: r.aiAnalysis
+            aiAnalysis: r.aiAnalysis,
+            createdBy: r.createdBy || r.created_by || undefined
           };
         });
 
@@ -428,6 +435,7 @@ export const dbService = {
         crossingIds: report.crossingIds,
         aiAnalysis: report.aiAnalysis || null,
         createdAt: report.createdAt,
+        createdBy: report.createdBy || null,
       }, { merge: true });
       return;
     }

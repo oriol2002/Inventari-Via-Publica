@@ -24,6 +24,7 @@ interface Props {
   reportType: 'maintenance' | 'technical' | 'statistical';
   reportTitle?: string;
   reportId?: string;
+  reportCreatedBy?: string;
   onBack: () => void;
   city: string;
   aiAnalysis?: string;
@@ -31,7 +32,7 @@ interface Props {
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e', '#a855f7'];
 
-const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, onBack, city, aiAnalysis }) => {
+const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, onBack, city, aiAnalysis }) => {
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -409,6 +410,11 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                    <p className="text-xs md:text-sm font-medium text-slate-700 leading-relaxed italic">
                      Aquest document certifica l'estat dels elements de via pública inventariats mitjançant el sistema de gestió vial. Totes les imatges i coordenades han estat capturades in-situ per personal autoritzat.
                    </p>
+                   {reportCreatedBy && (
+                     <p className="text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mt-4">
+                       Signat per: {reportCreatedBy}
+                     </p>
+                   )}
                 </section>
 
                 <section className="mt-12 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">

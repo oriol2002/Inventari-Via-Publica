@@ -483,7 +483,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!image || !location) {
+    if ((!image && !imageThumb) || !location) {
       alert("Cal una imatge i una ubicació per guardar el registre.");
       return;
     }
@@ -504,7 +504,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
 
     onSubmit({
       id,
-      image,
+      image: image || imageThumb || '',
       imageThumb: imageThumb || undefined,
       location: finalLocation,
       state,
@@ -543,6 +543,11 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
               Actualitzat: {new Date(initialData.updatedAt).toLocaleDateString('ca-ES')} · {new Date(initialData.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
+          {initialData && (initialData.updatedBy || initialData.createdBy) && (
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+              Usuari: {initialData.updatedBy || initialData.createdBy}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {fromAlert && initialData && !initialData.alertDismissed && (
@@ -561,7 +566,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 pb-4">
-        {!image ? (
+      {!(imageThumb || image) ? (
           <div className="space-y-6">
             <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] text-center mb-2">Captura d'imatge obligatòria</p>
             <div className="grid grid-cols-2 gap-4">

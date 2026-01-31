@@ -46,6 +46,8 @@ export interface PedestrianCrossing {
   notes?: string;
   createdAt: number;
   updatedAt: number;
+  createdBy?: string;
+  updatedBy?: string;
   alertDismissed?: boolean; // Marca si l'alerta ha estat llegida i descartada
   accessGroups?: AccessGroup[];
 }
@@ -80,6 +82,7 @@ export interface SavedReport {
   crossingIds: string[];
   createdAt: number;
   aiAnalysis?: string;
+  createdBy?: string;
 }
 
 // Grups definits per Tortosa actualitzats

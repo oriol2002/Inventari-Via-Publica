@@ -130,6 +130,9 @@ const App: React.FC = () => {
     setEditingCrossing(null);
     setHasImageInForm(false);
 
+    const author = user?.email || user?.displayName || user?.uid || 'Usuari';
+    const existing = crossings.find(c => c.id === crossing.id);
+
     const nextGroups: AccessGroup[] = (() => {
       if (userProfile?.role === 'admin') {
         if (crossing.accessGroups?.length) return crossing.accessGroups;
@@ -141,6 +144,8 @@ const App: React.FC = () => {
 
     const dataWithCity = {
       ...crossing,
+      createdBy: existing?.createdBy || crossing.createdBy || author,
+      updatedBy: author,
       accessGroups: nextGroups,
       location: { ...crossing.location, city: 'Tortosa' }
     };
@@ -211,6 +216,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleBatchAssignGroup = async (ids: string[], group: AccessGroup) => {
+    const author = user?.email || user?.displayName || user?.uid || 'Usuari';
+    const now = Date.now();
+    const updated = crossings.map(c => {
+      if (!ids.includes(c.id)) return c;
+      const currentGroups = c.accessGroups?.length ? c.accessGroups : ['mobilitat'];
+      const nextGroups = currentGroups.includes(group) ? currentGroups : [...currentGroups, group];
+      return {
+        ...c,
+        accessGroups: nextGroups,
+        updatedAt: now,
+        updatedBy: author
+      };
+    });
+
+    setCrossings(updated);
+    const toSave = updated.filter(c => ids.includes(c.id));
+    await Promise.all(toSave.map(c => dbService.save(c)));
+  };
+
   const handleCreateReport = async (selectedCrossings: PedestrianCrossing[], type: 'maintenance' | 'technical' | 'statistical') => {
     if (selectedCrossings.length === 0) return;
 
@@ -247,7 +272,8 @@ const App: React.FC = () => {
       type: type,
       crossingIds: selectedCrossings.map(c => c.id),
       createdAt: timestamp,
-      aiAnalysis: aiAnalysisText
+      aiAnalysis: aiAnalysisText,
+      createdBy: user?.email || user?.displayName || user?.uid || 'Usuari'
     };
 
     try {
@@ -441,6 +467,8 @@ const App: React.FC = () => {
                   onEdit={handleEditCrossing} 
                   onBatchReport={(selected) => handleCreateReport(selected, 'maintenance')} 
                   onBatchDelete={handleBatchDelete}
+                  onBatchAssignGroup={handleBatchAssignGroup}
+                  canAssignGroups={userProfile?.role === 'admin'}
                   city="Tortosa"
                 />
               )}
@@ -507,6 +535,7 @@ const App: React.FC = () => {
           reportType={activeReport.type} 
           reportTitle={activeReport.title}
           reportId={activeReport.id}
+          reportCreatedBy={activeReport.createdBy}
           aiAnalysis={activeReport.aiAnalysis}
           onBack={() => setActiveReport(null)} 
           city="Tortosa"

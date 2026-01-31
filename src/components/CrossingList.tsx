@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PedestrianCrossing, CrossingState, FilterOptions, AssetType, NEIGHBORHOODS_BY_CITY } from '../types';
+import { PedestrianCrossing, CrossingState, FilterOptions, AssetType, AccessGroup, NEIGHBORHOODS_BY_CITY } from '../types';
 import { 
   CalendarIcon, 
   DocumentTextIcon,
@@ -23,6 +23,8 @@ interface Props {
   onEdit: (crossing: PedestrianCrossing) => void;
   onBatchReport?: (crossings: PedestrianCrossing[]) => void;
   onBatchDelete?: (ids: string[]) => void;
+  onBatchAssignGroup?: (ids: string[], group: AccessGroup) => void;
+  canAssignGroups?: boolean;
   city: string;
 }
 
@@ -38,7 +40,7 @@ const getStateBadgeStyles = (state: CrossingState) => {
   }
 };
 
-const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilters, onEdit, onBatchReport, onBatchDelete, city }) => {
+const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilters, onEdit, onBatchReport, onBatchDelete, onBatchAssignGroup, canAssignGroups, city }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -148,6 +150,15 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
                   <DocumentTextIcon className="w-4 h-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">{selectedIds.size}</span>
                 </button>
+                {canAssignGroups && (
+                  <button
+                    onClick={() => onBatchAssignGroup?.(Array.from(selectedIds), 'agents-civics')}
+                    className="bg-blue-600 text-white px-3 py-2 rounded-xl shadow-lg hover:bg-blue-700 text-[9px] font-black uppercase tracking-widest"
+                    title="Assignar a Agents Cívics"
+                  >
+                    Agents Cívics
+                  </button>
+                )}
                 <button 
                   onClick={() => setShowDeleteConfirm(true)} 
                   className="bg-rose-600 text-white p-3 rounded-xl shadow-lg hover:bg-rose-700 transition-colors"
@@ -278,6 +289,9 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
                     </div>
                     <div className="text-[7px] font-bold text-slate-400" title="Última actualització">
                       {new Date(crossing.updatedAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })} · {new Date(crossing.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div className="text-[7px] font-bold text-slate-400" title="Usuari">
+                      {crossing.updatedBy || crossing.createdBy || 'Usuari'}
                     </div>
                   </div>
                 </div>
