@@ -45,6 +45,7 @@ export const dbService = {
           const payload = {
             id: c.id,
             assetType: c.assetType,
+            assetSubType: c.assetSubType || null,
             image: c.image || '',
             imageThumb: c.imageThumb || '',
             location: c.location,
@@ -121,6 +122,7 @@ export const dbService = {
           return {
             id: row.id || docSnap.id,
             assetType: (row.assetType as AssetType) || AssetType.CROSSING,
+            assetSubType: row.assetSubType || row.asset_subtype || '',
             image: row.image || '',
             imageThumb: row.imageThumb || '',
             location: row.location || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
@@ -185,6 +187,7 @@ export const dbService = {
         return {
             id: row.id,
             assetType: (row.asset_type as AssetType) || AssetType.CROSSING,
+          assetSubType: row.asset_subtype || row.assetSubType || '',
             image: row.image || '',
             imageThumb: row.image_thumb || '',
             location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
@@ -243,6 +246,7 @@ export const dbService = {
       const payload = {
         id: crossing.id,
         assetType: crossing.assetType,
+        assetSubType: crossing.assetSubType || null,
         image: crossing.image,
         imageThumb: crossing.imageThumb || null,
         location: crossing.location,

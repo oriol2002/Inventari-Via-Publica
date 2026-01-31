@@ -27,6 +27,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const [state, setState] = useState<CrossingState>(initialData?.state || CrossingState.GOOD);
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
   const [assetType, setAssetType] = useState<AssetType>(initialData?.assetType || AssetType.CROSSING);
+  const [assetSubType, setAssetSubType] = useState<string>(initialData?.assetSubType || '');
   const [notes, setNotes] = useState<string>(initialData?.notes || '');
   const [accessGroups, setAccessGroups] = useState<AccessGroup[]>(
     initialData?.accessGroups || (defaultGroup ? [defaultGroup] : ['mobilitat'])
@@ -50,6 +51,47 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const geocodeTimeout = useRef<any>(null);
   
   const shouldRecenter = useRef(true);
+  const isAgentsCivicsContext = defaultGroup === 'agents-civics';
+
+  const agentsCivicsAssetTypes: AssetType[] = [
+    AssetType.AWARENESS,
+    AssetType.SIGNS,
+    AssetType.PAINT,
+    AssetType.PAVEMENT,
+    AssetType.URBAN_FURNITURE,
+    AssetType.TRAFFIC_LIGHT,
+    AssetType.CONTAINER,
+    AssetType.OTHER
+  ];
+
+  const agentsCivicsSubTypes: Partial<Record<AssetType, string[]>> = {
+    [AssetType.AWARENESS]: ['Gossos', 'Patinets elèctrics', 'Escombraries', 'Altres'],
+    [AssetType.SIGNS]: ['Prohibició', 'Obligació', 'Informació', 'Advertència', 'Altres'],
+    [AssetType.PAINT]: ['Pas de vianants', 'PMR', 'Carril bici', 'Zona càrrega/descàrrega', 'Altres'],
+    [AssetType.PAVEMENT]: ['Vorera', 'Calçada', 'Rigola', 'Altres'],
+    [AssetType.URBAN_FURNITURE]: ['Paperera', 'Banc', 'Font', 'Jardinera'],
+    [AssetType.TRAFFIC_LIGHT]: ['Vehicles', 'Vianants', 'Bicicletes', 'Altres'],
+    [AssetType.CONTAINER]: ['Orgànica', 'Paper', 'Vidre', 'Envasos', 'Rebuig', 'Altres'],
+    [AssetType.OTHER]: ['Altres']
+  };
+
+  const getSubTypeOptions = (type: AssetType) => agentsCivicsSubTypes[type] || [];
+
+  useEffect(() => {
+    if (!isAgentsCivicsContext) return;
+    if (!agentsCivicsAssetTypes.includes(assetType)) {
+      setAssetType(AssetType.AWARENESS);
+      return;
+    }
+    const options = getSubTypeOptions(assetType);
+    if (!options.length) {
+      if (assetSubType) setAssetSubType('');
+      return;
+    }
+    if (!options.includes(assetSubType)) {
+      setAssetSubType(options[0]);
+    }
+  }, [isAgentsCivicsContext, assetType, assetSubType]);
 
   const STREET_NEIGHBORHOOD_KEY = 'mobilitat_street_neighborhood_map';
 
@@ -510,6 +552,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       state,
       lastPaintedDate: lastPainted,
       assetType,
+      assetSubType: isAgentsCivicsContext ? (assetSubType || '') : undefined,
       accessGroups: canAssignGroups
         ? (accessGroups.length ? accessGroups : ['mobilitat'])
         : (defaultGroup ? [defaultGroup] : (accessGroups.length ? accessGroups : ['mobilitat'])),
@@ -607,10 +650,36 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus d'Element</label>
-              <select value={assetType} onChange={(e) => setAssetType(e.target.value as AssetType)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
-                {Object.values(AssetType).sort((a,b) => a.localeCompare(b)).map(t => <option key={t} value={t}>{t}</option>)}
+              <select
+                value={assetType}
+                onChange={(e) => {
+                  const nextType = e.target.value as AssetType;
+                  setAssetType(nextType);
+                  if (isAgentsCivicsContext) {
+                    const options = getSubTypeOptions(nextType);
+                    setAssetSubType(options[0] || '');
+                  }
+                }}
+                className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+              >
+                {(isAgentsCivicsContext ? agentsCivicsAssetTypes : Object.values(AssetType).sort((a,b) => a.localeCompare(b)))
+                  .map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            {isAgentsCivicsContext && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus Relacionat</label>
+                <select
+                  value={assetSubType}
+                  onChange={(e) => setAssetSubType(e.target.value)}
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+                >
+                  {getSubTypeOptions(assetType).map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Estat Conservació</label>
               <select value={state} onChange={(e) => setState(e.target.value as CrossingState)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
@@ -619,7 +688,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
             </div>
           </div>
 
-          {canAssignGroups && (
+          {canAssignGroups && !isAgentsCivicsContext && (
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Àmbit</label>
               <div className="flex gap-2 flex-wrap">

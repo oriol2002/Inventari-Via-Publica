@@ -9,6 +9,11 @@ export enum CrossingState {
 }
 
 export enum AssetType {
+  AWARENESS = 'Sensibilització',
+  SIGNS = 'Senyals',
+  PAINT = 'Pintura',
+  PAVEMENT = 'Paviment',
+  URBAN_FURNITURE = 'Mobiliari urbà',
   CROSSING = 'Pas de Vianants',
   TRAFFIC_LIGHT = 'Semàfor',
   SIGN = 'Senyal Vertical',
@@ -42,6 +47,7 @@ export interface PedestrianCrossing {
   state: CrossingState;
   lastPaintedDate: string;
   assetType: AssetType;
+  assetSubType?: string;
   paintType?: string;
   notes?: string;
   createdAt: number;
