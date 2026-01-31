@@ -9,7 +9,6 @@ import {
   ChatBubbleLeftRightIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
-import { jsPDF } from 'jspdf';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { firebaseStorage } from '../services/firebaseService';
 import { dbService } from '../services/dbService';
@@ -197,123 +196,63 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     }
   };
 
+  const buildReportHtml = () => {
+    if (!reportRef.current) return null;
+
+    const clonedContent = reportRef.current.cloneNode(true) as HTMLElement;
+    const stylesheets = Array.from(document.styleSheets)
+      .map((sheet) => {
+        try {
+          if (sheet.cssRules) {
+            let css = '';
+            for (let i = 0; i < sheet.cssRules.length; i++) {
+              css += sheet.cssRules[i].cssText;
+            }
+            return css;
+          }
+        } catch {
+          return '';
+        }
+        return '';
+      })
+      .join('\n');
+
+    return `<!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <base href="${window.location.origin}">
+          <style>
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+            html, body { margin: 0; padding: 0; background: white; }
+            ${stylesheets}
+          </style>
+        </head>
+        <body>
+          ${clonedContent.innerHTML}
+        </body>
+      </html>`;
+  };
+
   const generateCompactPdfAndUpload = async () => {
     if (isPdfBuilding) return;
     setIsPdfBuilding(true);
     try {
-      const loadImageData = async (url?: string | null) => {
-        if (!url) return null;
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000);
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          return await new Promise<string | null>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : null);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-          });
-        } catch {
-          return null;
-        }
-      };
+      const html = buildReportHtml();
+      if (!html) throw new Error('No report HTML');
 
-      const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 40;
-      let y = margin;
+      const response = await fetch('/api/render-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html })
+      });
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text(reportTitle || `Informe ${city}`, margin, y);
-      y += 18;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Data: ${displayDate} ${displayTime}`, margin, y);
-      y += 14;
-      if (internalId) {
-        doc.text(`Codi: ${internalId.replace('REP-', '')}`, margin, y);
-        y += 14;
-      }
-      doc.text(`Elements: ${shareItems.length}`, margin, y);
-      y += 18;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('Llistat d’elements', margin, y);
-      y += 16;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-
-      const maxItems = Math.min(shareItems.length, 40);
-      for (let i = 0; i < maxItems; i += 1) {
-        const item = shareItems[i];
-        const address = [item.location.street, item.location.number].filter(Boolean).join(' ').trim() || 'Sense adreça';
-        const subtype = (item as any).assetSubType ? ` · ${(item as any).assetSubType}` : '';
-        const signDetail = (item as any).signDetail ? ` · ${(item as any).signDetail}` : '';
-        const retention = (item as any).retentionLineLength ? ` · Línia: ${(item as any).retentionLineLength}m` : '';
-        const width = (item as any).crossingWidth ? ` · Ample: ${(item as any).crossingWidth}m` : '';
-        const coords = item.location.lat && item.location.lng ? `${item.location.lat.toFixed(5)}, ${item.location.lng.toFixed(5)}` : '';
-        const neighborhood = item.location.neighborhood || '';
-        const notes = item.notes ? item.notes.slice(0, 120) : '';
-
-        const blockHeight = 78;
-        if (y > pageHeight - margin - blockHeight) {
-          doc.addPage();
-          y = margin;
-        }
-        const imageSize = 56;
-        const imageUrl = item.imageThumb || item.image || '';
-        const imageData = await loadImageData(imageUrl);
-        if (imageData) {
-          doc.addImage(imageData, 'JPEG', margin, y - 2, imageSize, imageSize);
-        } else {
-          doc.setDrawColor(200);
-          doc.rect(margin, y - 2, imageSize, imageSize);
-        }
-
-        const textX = margin + imageSize + 10;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${i + 1}. ${address}`, textX, y + 10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${item.assetType}${subtype}${signDetail}${retention}${width}`, textX, y + 24);
-        doc.text(`Estat: ${item.state}  ·  Darrera actuació: ${item.lastPaintedDate}`, textX, y + 38);
-        if (neighborhood) {
-          doc.text(`Barri: ${neighborhood}`, textX, y + 52);
-        }
-        if (coords) {
-          doc.text(`Coords: ${coords}`, textX, y + 66);
-        }
-        if (notes) {
-          doc.text(`Notes: ${notes}`, textX, y + 80);
-        }
-
-        const mapsLink = (item.location.lat && item.location.lng)
-          ? `https://www.google.com/maps?q=${item.location.lat},${item.location.lng}`
-          : '';
-        if (mapsLink) {
-          doc.setTextColor(0, 102, 204);
-          doc.textWithLink(mapsLink, textX, y + 94, { url: mapsLink });
-          doc.setTextColor(0, 0, 0);
-        }
-
-        y += blockHeight;
+      if (!response.ok) {
+        throw new Error('Render PDF failed');
       }
 
-      if (shareItems.length > maxItems) {
-        if (y > pageHeight - margin - 20) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.setFontSize(9);
-        doc.text(`(+${shareItems.length - maxItems} elements més)`, margin, y);
-      }
-
-      const blob = doc.output('blob');
+      const blob = await response.blob();
       const reportId = externalId || internalId || `REP-${Date.now()}`;
       const storageRef = ref(firebaseStorage, `reports/${reportId}/latest.pdf`);
       await uploadBytes(storageRef, blob, { contentType: 'application/pdf', cacheControl: 'public,max-age=31536000' });
