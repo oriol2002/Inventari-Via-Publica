@@ -589,7 +589,7 @@ const App: React.FC = () => {
       {isFormOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pt-[calc(2rem+env(safe-area-inset-top))]">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={handleCloseForm}></div>
-          <div className={`relative w-full ${editingCrossing || hasImageInForm ? 'max-w-xl' : 'max-w-sm'} bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 transition-all border border-slate-200 max-h-[90vh] flex flex-col`}>
+          <div className={`relative w-full ${editingCrossing || hasImageInForm ? 'max-w-4xl' : 'max-w-sm'} bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 transition-all border border-slate-200 max-h-[90vh] flex flex-col`}>
             <CrossingForm 
               key={editingCrossing?.id || 'new-crossing-form'} 
               initialData={editingCrossing} 
