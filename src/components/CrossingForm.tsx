@@ -52,6 +52,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   
   const shouldRecenter = useRef(true);
   const isAgentsCivicsContext = defaultGroup === 'agents-civics';
+  const isMobilitatContext = !isAgentsCivicsContext;
   const CITY_NAME = 'Tortosa';
   const NOMINATIM_VIEWBOX = '0.43,40.86,0.63,40.74';
 
@@ -62,6 +63,22 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     AssetType.PAVEMENT,
     AssetType.URBAN_FURNITURE,
     AssetType.TRAFFIC_LIGHT,
+    AssetType.CONTAINER,
+    AssetType.OTHER
+  ];
+
+  const mobilitatAssetTypes: AssetType[] = [
+    AssetType.CROSSING,
+    AssetType.TRAFFIC_LIGHT,
+    AssetType.SIGN,
+    AssetType.BARRIER,
+    AssetType.BOLLARD,
+    AssetType.SPEED_BUMP,
+    AssetType.MIRROR,
+    AssetType.HORIZONTAL_GENERIC,
+    AssetType.PMR_PAINT,
+    AssetType.LOADING_UNLOADING,
+    AssetType.ACCESSIBILITY_RAMP,
     AssetType.CONTAINER,
     AssetType.OTHER
   ];
@@ -77,12 +94,32 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     [AssetType.OTHER]: ['Altres']
   };
 
-  const getSubTypeOptions = (type: AssetType) => agentsCivicsSubTypes[type] || [];
+  const mobilitatSubTypes: Partial<Record<AssetType, string[]>> = {
+    [AssetType.CROSSING]: ['Normal', 'Elevat', 'Amb semàfor', 'Altres'],
+    [AssetType.TRAFFIC_LIGHT]: ['Vehicles', 'Vianants', 'Bicicletes', 'Altres'],
+    [AssetType.SIGN]: ['Stop', 'Cediu el pas', 'Limit velocitat', 'Direccional', 'Altres'],
+    [AssetType.BARRIER]: ['Protecció vianants', 'Accés restringit', 'Obra', 'Altres'],
+    [AssetType.BOLLARD]: ['Fixa', 'Abatible', 'Retràctil', 'Altres'],
+    [AssetType.SPEED_BUMP]: ['Llom', 'Coixí berlinès', 'Banda sonora', 'Altres'],
+    [AssetType.MIRROR]: ['Convex', 'Panoràmic', 'Altres'],
+    [AssetType.HORIZONTAL_GENERIC]: ['Fletxes', 'Stop', 'Cediu el pas', 'Pas vianants', 'Altres'],
+    [AssetType.PMR_PAINT]: ['Reserva', 'Gual', 'Itinerari', 'Altres'],
+    [AssetType.LOADING_UNLOADING]: ['Zona càrrega', 'Zona descàrrega', 'Altres'],
+    [AssetType.ACCESSIBILITY_RAMP]: ['Vorera', 'Pas vianants', 'Altres'],
+    [AssetType.CONTAINER]: ['Orgànica', 'Paper', 'Vidre', 'Envasos', 'Rebuig', 'Altres'],
+    [AssetType.OTHER]: ['Altres']
+  };
+
+  const getContextAssetTypes = () => (isAgentsCivicsContext ? agentsCivicsAssetTypes : mobilitatAssetTypes);
+  const getSubTypeOptions = (type: AssetType) => {
+    if (isAgentsCivicsContext) return agentsCivicsSubTypes[type] || [];
+    return mobilitatSubTypes[type] || [];
+  };
 
   useEffect(() => {
-    if (!isAgentsCivicsContext) return;
-    if (!agentsCivicsAssetTypes.includes(assetType)) {
-      setAssetType(AssetType.AWARENESS);
+    const contextTypes = getContextAssetTypes();
+    if (!contextTypes.includes(assetType)) {
+      setAssetType(contextTypes[0]);
       return;
     }
     const options = getSubTypeOptions(assetType);
@@ -93,7 +130,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     if (!options.includes(assetSubType)) {
       setAssetSubType(options[0]);
     }
-  }, [isAgentsCivicsContext, assetType, assetSubType]);
+  }, [isAgentsCivicsContext, isMobilitatContext, assetType, assetSubType]);
 
   const STREET_NEIGHBORHOOD_KEY = 'mobilitat_street_neighborhood_map';
 
@@ -567,7 +604,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       state,
       lastPaintedDate: lastPainted,
       assetType,
-      assetSubType: isAgentsCivicsContext ? (assetSubType || '') : undefined,
+      assetSubType: assetSubType || undefined,
       accessGroups: canAssignGroups
         ? (accessGroups.length ? accessGroups : ['mobilitat'])
         : (defaultGroup ? [defaultGroup] : (accessGroups.length ? accessGroups : ['mobilitat'])),
@@ -677,11 +714,11 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                 }}
                 className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
               >
-                {(isAgentsCivicsContext ? agentsCivicsAssetTypes : Object.values(AssetType).sort((a,b) => a.localeCompare(b)))
+                {(isAgentsCivicsContext ? agentsCivicsAssetTypes : mobilitatAssetTypes)
                   .map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            {isAgentsCivicsContext && (
+            {(isAgentsCivicsContext || isMobilitatContext) && (
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus Relacionat</label>
                 <select
