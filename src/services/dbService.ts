@@ -50,12 +50,12 @@ export const dbService = {
             location: c.location,
             state: c.state,
             lastPaintedDate: c.lastPaintedDate,
-            lastInspectedDate: c.lastInspectedDate || null,
             paintType: c.paintType || null,
             notes: c.notes || '',
             createdAt: c.createdAt || Date.now(),
             updatedAt: c.updatedAt || Date.now(),
-            alertDismissed: c.alertDismissed || false
+            alertDismissed: c.alertDismissed || false,
+            accessGroups: c.accessGroups || null
           };
           batch.set(doc(firebaseDb, 'crossings', c.id), payload, { merge: true });
         });
@@ -126,12 +126,12 @@ export const dbService = {
             location: row.location || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
             state: (row.state as CrossingState) || CrossingState.GOOD,
             lastPaintedDate: row.lastPaintedDate || new Date().toISOString().split('T')[0],
-            lastInspectedDate: row.lastInspectedDate || null,
             paintType: row.paintType || 'Estàndard',
             notes: row.notes || '',
             createdAt: row.createdAt || Date.now(),
             updatedAt: row.updatedAt || Date.now(),
             alertDismissed: row.alertDismissed || false,
+            accessGroups: row.accessGroups || row.access_groups || undefined,
           };
         });
 
@@ -188,11 +188,11 @@ export const dbService = {
             location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
             state: (row.state as CrossingState) || CrossingState.GOOD,
             lastPaintedDate: row.last_painted_date || new Date().toISOString().split('T')[0],
-            lastInspectedDate: row.last_inspected_date || null,
             paintType: row.paint_type || 'Estàndard',
             notes: row.notes || '',
             createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now()
+            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+            accessGroups: row.access_groups || undefined
         };
       });
 
@@ -244,12 +244,11 @@ export const dbService = {
         location: crossing.location,
         state: crossing.state,
         lastPaintedDate: crossing.lastPaintedDate,
-        lastInspectedDate: crossing.lastInspectedDate || null,
-        paintType: crossing.paintType || null,
         notes: crossing.notes || '',
         createdAt: crossing.createdAt,
         updatedAt: crossing.updatedAt,
-        alertDismissed: crossing.alertDismissed || false
+        alertDismissed: crossing.alertDismissed || false,
+        accessGroups: crossing.accessGroups || null
       };
       await setDoc(doc(firebaseDb, 'crossings', crossing.id), payload, { merge: true });
       return;
@@ -264,7 +263,6 @@ export const dbService = {
         location: crossing.location,
         state: crossing.state,
         last_painted_date: crossing.lastPaintedDate,
-        last_inspected_date: crossing.lastInspectedDate,
         paint_type: crossing.paintType,
         notes: crossing.notes
       };
@@ -517,11 +515,11 @@ export const dbService = {
             location: loc || { lat: 40.8122, lng: 0.5215, city: 'Tortosa', neighborhood: '' },
             state: (row.state as CrossingState) || CrossingState.GOOD,
             lastPaintedDate: row.last_painted_date || new Date().toISOString().split('T')[0],
-            lastInspectedDate: row.last_inspected_date || null,
             paintType: row.paint_type || 'Estàndard',
             notes: row.notes || '',
             createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now()
+            updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+            accessGroups: row.access_groups || undefined
           };
         });
         

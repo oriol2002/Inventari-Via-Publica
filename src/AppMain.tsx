@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PedestrianCrossing, CrossingState, FilterOptions, AssetType, SavedReport, CITIES, NEIGHBORHOODS_BY_CITY } from './types';
+import { PedestrianCrossing, CrossingState, FilterOptions, AssetType, SavedReport, AppSection, UserProfile, AccessGroup, CITIES, NEIGHBORHOODS_BY_CITY } from './types';
 import CrossingList from './components/CrossingList';
 import CrossingForm from './components/CrossingForm';
 import { Statistics } from './components/Statistics';
@@ -12,6 +12,8 @@ import { dbService } from './services/dbService';
 import { notificationService } from './services/notificationService';
 import { aiService } from './services/aiService';
 import { useAuth } from './hooks/useAuth';
+import { firebaseDb } from './services/firebaseService';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { 
   PlusIcon, 
@@ -41,6 +43,9 @@ const App: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('Tortosa');
   const [filters, setFilters] = useState<FilterOptions>({ city: 'Tortosa' });
   const [activeReport, setActiveReport] = useState<SavedReport | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeSection, setActiveSection] = useState<AppSection | null>(null);
+  const [showSectionChooser, setShowSectionChooser] = useState(false);
   
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -68,7 +73,6 @@ const App: React.FC = () => {
     try {
       const data = await dbService.getAll();
       setCrossings(data);
-      notificationService.checkMaintenanceDeadlines(data);
     } catch (error) {
       console.error("Error carregant dades inicials:", error);
     } finally {
@@ -81,13 +85,63 @@ const App: React.FC = () => {
     notificationService.requestPermission();
   }, []);
 
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.uid || !user.email) return;
+      const ref = doc(firebaseDb, 'user_profiles', user.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const profile = snap.data() as UserProfile;
+        setUserProfile(profile);
+        if (profile.role === 'admin') {
+          setActiveSection(null);
+          setShowSectionChooser(true);
+        } else {
+          setActiveSection(profile.defaultSection || 'mobilitat');
+        }
+        return;
+      }
+
+      const email = user.email.toLowerCase();
+      const isAgents = email === 'agentscivics@gmail.com';
+      const profile: UserProfile = {
+        id: user.uid,
+        email: user.email,
+        role: isAgents ? 'user' : 'admin',
+        allowedSections: isAgents ? ['agents-civics'] : ['mobilitat', 'agents-civics', 'administrador'],
+        defaultSection: isAgents ? 'agents-civics' : 'mobilitat'
+      };
+
+      await setDoc(ref, profile, { merge: true });
+      setUserProfile(profile);
+      if (profile.role === 'admin') {
+        setActiveSection(null);
+        setShowSectionChooser(true);
+      } else {
+        setActiveSection(profile.defaultSection);
+      }
+    };
+
+    loadProfile();
+  }, [user?.uid, user?.email]);
+
   const handleSaveCrossing = async (crossing: PedestrianCrossing) => {
     setIsFormOpen(false);
     setEditingCrossing(null);
     setHasImageInForm(false);
 
+    const nextGroups: AccessGroup[] = (() => {
+      if (userProfile?.role === 'admin') {
+        if (crossing.accessGroups?.length) return crossing.accessGroups;
+        if (activeSection && activeSection !== 'administrador') return [activeSection as AccessGroup];
+        return ['mobilitat'];
+      }
+      return [((activeSection || userProfile?.defaultSection || 'mobilitat') as AccessGroup)];
+    })();
+
     const dataWithCity = {
       ...crossing,
+      accessGroups: nextGroups,
       location: { ...crossing.location, city: 'Tortosa' }
     };
 
@@ -208,13 +262,28 @@ const App: React.FC = () => {
     }
   };
 
+  const sectionCrossings = useMemo(() => {
+    if (!activeSection) return [];
+    return crossings.filter(c => {
+      const groups = c.accessGroups?.length ? c.accessGroups : ['mobilitat'];
+      return activeSection === 'administrador' || groups.includes(activeSection as AccessGroup);
+    });
+  }, [crossings, activeSection]);
+
+  useEffect(() => {
+    if (sectionCrossings.length > 0) {
+      notificationService.checkMaintenanceDeadlines(sectionCrossings);
+    }
+  }, [sectionCrossings]);
+
   const activeReportCrossings = useMemo(() => {
     if (!activeReport) return [];
-    return crossings.filter(c => activeReport.crossingIds.includes(c.id));
-  }, [activeReport, crossings]);
+    return sectionCrossings.filter(c => activeReport.crossingIds.includes(c.id));
+  }, [activeReport, sectionCrossings]);
 
   const filteredCrossings = useMemo(() => {
-    return crossings.filter(c => {
+    if (!activeSection) return [];
+    return sectionCrossings.filter(c => {
       const matchesCity = !c.location.city || c.location.city === 'Tortosa';
       const matchesSearch = !filters.searchQuery || 
         c.location.street?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
@@ -231,14 +300,13 @@ const App: React.FC = () => {
 
       return matchesCity && matchesSearch && matchesState && matchesAsset && matchesNeighborhood && matchesDate;
     });
-  }, [crossings, filters]);
+  }, [sectionCrossings, filters]);
 
   const alerts = filteredCrossings.filter(c => {
     // Excloure elements marcats com a llegits
     if (c.alertDismissed) return false;
     
-    const lastCheck = c.lastInspectedDate && c.lastInspectedDate > c.lastPaintedDate ? c.lastInspectedDate : c.lastPaintedDate;
-    const months = notificationService.calculateMonthsSince(lastCheck);
+    const months = notificationService.calculateMonthsSince(c.lastPaintedDate);
     
     const isExcellentCheck = c.assetType === AssetType.CROSSING && c.state === CrossingState.EXCELLENT && months >= 6;
     const isCritical = c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS;
@@ -260,6 +328,34 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 overflow-hidden font-sans relative">
+      {showSectionChooser && userProfile?.role === 'admin' && (
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-6">
+          <div className="bg-white rounded-[2rem] shadow-2xl border border-slate-200 w-full max-w-sm p-6 text-center">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Selecciona apartat</h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Escull l'àmbit de treball</p>
+            <div className="mt-6 grid gap-3">
+              {['mobilitat', 'agents-civics', 'administrador'].map((section) => (
+                <button
+                  key={section}
+                  onClick={async () => {
+                    const nextSection = section as AppSection;
+                    setActiveSection(nextSection);
+                    setShowSectionChooser(false);
+                    if (userProfile) {
+                      const ref = doc(firebaseDb, 'user_profiles', userProfile.id);
+                      await setDoc(ref, { defaultSection: nextSection }, { merge: true });
+                      setUserProfile({ ...userProfile, defaultSection: nextSection });
+                    }
+                  }}
+                  className="w-full bg-slate-900 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-colors"
+                >
+                  {section === 'mobilitat' ? 'Mobilitat' : section === 'agents-civics' ? 'Agents Cívics' : 'Administrador'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {isGeneratingReport && (
         <div className="absolute inset-0 z-[6000] bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in">
           <div className="bg-white p-8 rounded-3xl shadow-2xl border border-blue-200 flex flex-col items-center max-w-sm text-center">
@@ -380,7 +476,7 @@ const App: React.FC = () => {
               )}
               {view === 'archive' && (
                 <ReportHistory 
-                  crossings={crossings} 
+                  crossings={sectionCrossings} 
                   onOpenReport={(r) => setActiveReport(r)} 
                 />
               )}
@@ -431,6 +527,8 @@ const App: React.FC = () => {
               fromAlert={!!editingCrossing && alerts.some(a => a.id === editingCrossing.id)}
               onDismissAlert={handleDismissAlert}
               userId={user?.id}
+              canAssignGroups={userProfile?.role === 'admin'}
+              defaultGroup={(activeSection && activeSection !== 'administrador') ? (activeSection as AccessGroup) : (userProfile?.defaultSection === 'agents-civics' ? 'agents-civics' : 'mobilitat')}
             />
           </div>
         </div>

@@ -25,12 +25,7 @@ export const notificationService = {
     const notifiedData = JSON.parse(localStorage.getItem(notifiedKey) || '{}');
 
     crossings.forEach(c => {
-      // Prioritzem la data d'inspecció si és més recent que la de pintat
-      const effectiveDate = c.lastInspectedDate && c.lastInspectedDate > c.lastPaintedDate 
-        ? c.lastInspectedDate 
-        : c.lastPaintedDate;
-        
-      const months = this.calculateMonthsSince(effectiveDate);
+      const months = this.calculateMonthsSince(c.lastPaintedDate);
       
       // Control obligatori 6 mesos per a estat Excel·lent
       const isExcellentMaintenanceCheck = c.assetType === AssetType.CROSSING && 

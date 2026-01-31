@@ -41,13 +41,25 @@ export interface PedestrianCrossing {
   location: Location;
   state: CrossingState;
   lastPaintedDate: string;
-  lastInspectedDate?: string; // Data de l'últim punt de control visual
   assetType: AssetType;
   paintType?: string;
   notes?: string;
   createdAt: number;
   updatedAt: number;
   alertDismissed?: boolean; // Marca si l'alerta ha estat llegida i descartada
+  accessGroups?: AccessGroup[];
+}
+
+export type AccessGroup = 'mobilitat' | 'agents-civics';
+export type AppSection = AccessGroup | 'administrador';
+export type UserRole = 'admin' | 'user';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  allowedSections: AppSection[];
+  defaultSection: AppSection;
 }
 
 export interface FilterOptions {

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import * as L from 'leaflet';
 import { CameraIcon, PhotoIcon, MapPinIcon, XMarkIcon, PencilIcon, GlobeEuropeAfricaIcon, Square2StackIcon, MagnifyingGlassIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
-import { CrossingState, PedestrianCrossing, Location, AssetType, TORTOSA_BARRIS, TORTOSA_PEDANIES, TORTOSA_POLIGONS } from '../types';
+import { CrossingState, PedestrianCrossing, Location, AssetType, AccessGroup, TORTOSA_BARRIS, TORTOSA_PEDANIES, TORTOSA_POLIGONS } from '../types';
 import { processFile } from '../services/photoUploadService';
 import ImageEditor from './ImageEditor';
 
@@ -16,9 +16,11 @@ interface Props {
   fromAlert?: boolean;
   onDismissAlert?: (id: string) => void;
   userId?: string;
+  canAssignGroups?: boolean;
+  defaultGroup?: AccessGroup;
 }
 
-const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert, userId }) => {
+const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, onImageCapture, fromAlert = false, onDismissAlert, userId, canAssignGroups = false, defaultGroup }) => {
   const [image, setImage] = useState<string | null>(initialData?.image || null);
   const [imageThumb, setImageThumb] = useState<string | null>(initialData?.imageThumb || null);
   const [location, setLocation] = useState<Location | null>(initialData?.location || null);
@@ -26,6 +28,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
   const [assetType, setAssetType] = useState<AssetType>(initialData?.assetType || AssetType.CROSSING);
   const [notes, setNotes] = useState<string>(initialData?.notes || '');
+  const [accessGroups, setAccessGroups] = useState<AccessGroup[]>(
+    initialData?.accessGroups || (defaultGroup ? [defaultGroup] : ['mobilitat'])
+  );
   
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('satellite');
@@ -505,6 +510,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       state,
       lastPaintedDate: lastPainted,
       assetType,
+      accessGroups: canAssignGroups
+        ? (accessGroups.length ? accessGroups : ['mobilitat'])
+        : (defaultGroup ? [defaultGroup] : (accessGroups.length ? accessGroups : ['mobilitat'])),
       notes: notes || '',
       createdAt: initialData?.createdAt || now,
       updatedAt: now,
@@ -605,6 +613,32 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
               </select>
             </div>
           </div>
+
+          {canAssignGroups && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Àmbit</label>
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  { key: 'mobilitat', label: 'Mobilitat' },
+                  { key: 'agents-civics', label: 'Agents Cívics' }
+                ] as { key: AccessGroup; label: string }[]).map(group => (
+                  <button
+                    key={group.key}
+                    type="button"
+                    onClick={() => {
+                      setAccessGroups(prev => prev.includes(group.key)
+                        ? prev.filter(g => g !== group.key)
+                        : [...prev, group.key]
+                      );
+                    }}
+                    className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${accessGroups.includes(group.key) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+                  >
+                    {group.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-300 space-y-5">
              <div className="flex items-center justify-between">
