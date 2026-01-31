@@ -781,6 +781,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                   className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
                 />
                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Llargada estàndard: 4 m</p>
+                <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">
+                  M²: {((Number(crossingWidth) || 0) * 4).toFixed(2)}
+                </p>
               </div>
             </div>
           )}
