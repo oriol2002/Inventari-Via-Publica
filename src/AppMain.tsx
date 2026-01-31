@@ -100,7 +100,7 @@ const App: React.FC = () => {
           role: isAgents ? 'user' : 'admin',
           allowedSections: isAgents
             ? ['agents-civics']
-            : (isOriol ? ['mobilitat', 'administrador'] : (existing.allowedSections || ['mobilitat', 'agents-civics', 'administrador'])),
+            : (isOriol ? ['mobilitat', 'agents-civics', 'administrador'] : (existing.allowedSections || ['mobilitat', 'agents-civics', 'administrador'])),
           defaultSection: isAgents ? 'agents-civics' : (isOriol ? 'mobilitat' : (existing.defaultSection || 'mobilitat'))
         };
         if (JSON.stringify(existing) !== JSON.stringify(enforced)) {
@@ -126,7 +126,7 @@ const App: React.FC = () => {
         role: isAgents ? 'user' : 'admin',
           allowedSections: isAgents
             ? ['agents-civics']
-            : (isOriol ? ['mobilitat', 'administrador'] : ['mobilitat', 'agents-civics', 'administrador']),
+          : (isOriol ? ['mobilitat', 'agents-civics', 'administrador'] : ['mobilitat', 'agents-civics', 'administrador']),
           defaultSection: isAgents ? 'agents-civics' : (isOriol ? 'mobilitat' : 'mobilitat')
       };
 
