@@ -1,0 +1,60 @@
+mutation CreateMobilityElement($typeId: UUID!, $userId: UUID!, $name: String!, $status: String!) @auth(level: USER) {
+  mobilityElement_insert(data: {
+    typeId: $typeId,
+    userId: $userId,
+    name: $name,
+    status: $status,
+    createdAt_expr: "request.time"
+  })
+}
+
+query GetMobilityElement($id: UUID!) @auth(level: USER) {
+  mobilityElement(id: $id) {
+    id
+    type {
+      id
+      name
+      description
+    }
+    user {
+      id
+      displayName
+      email
+    }
+    name
+    description
+    status
+    brand
+    model
+    imageUrl
+    serialNumber
+    isPublic
+    createdAt
+  }
+}
+
+mutation LogMobilityElementEvent($mobilityElementId: UUID!, $userId: UUID!, $description: String!, $eventType: String!, $cost: Float) @auth(level: USER) {
+  logEntry_insert(data: {
+    mobilityElementId: $mobilityElementId,
+    userId: $userId,
+    description: $description,
+    eventType: $eventType,
+    cost: $cost,
+    timestamp_expr: "request.time"
+  })
+}
+
+query ListPublicMobilityElements @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  mobilityElements(where: {isPublic: {eq: true}}) {
+    id
+    type {
+      id
+      name
+    }
+    name
+    description
+    brand
+    model
+    imageUrl
+  }
+}

@@ -1,0 +1,37 @@
+type User @table {
+  uid: String!
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  photoUrl: String
+}
+
+type MobilityElement @table {
+  name: String!
+  type: ElementType!
+  status: String!
+  createdAt: Timestamp!
+  brand: String
+  model: String
+  serialNumber: String
+  description: String
+  imageUrl: String
+  isPublic: Boolean
+  user: User!
+}
+
+type LogEntry @table {
+  timestamp: Timestamp!
+  eventType: String!
+  description: String!
+  relatedUser: User
+  cost: Float
+  user: User!
+  mobilityElement: MobilityElement!
+}
+
+type ElementType @table {
+  name: String!
+  createdAt: Timestamp!
+  description: String
+}

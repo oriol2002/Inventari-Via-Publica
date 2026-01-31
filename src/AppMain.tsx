@@ -36,6 +36,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<'map' | 'list' | 'explorer' | 'stats' | 'archive'>('map');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCrossing, setEditingCrossing] = useState<PedestrianCrossing | null>(null); 
+  const [hasImageInForm, setHasImageInForm] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('Tortosa');
   const [filters, setFilters] = useState<FilterOptions>({ city: 'Tortosa' });
@@ -302,7 +303,7 @@ const App: React.FC = () => {
             {backend === 'firebase' && (
               <button
                 onClick={handleMigrateLocal}
-                className="px-3 md:px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
+                className="hidden md:inline-flex px-3 md:px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
                 title="Migrar dades locals a Firebase"
               >
                 Migrar
@@ -312,7 +313,7 @@ const App: React.FC = () => {
             <button 
               onClick={handleForceSync}
               disabled={isSyncing}
-              className={`p-2 md:p-2.5 rounded-full border transition-colors flex-shrink-0 ${
+              className={`hidden md:inline-flex p-2 md:p-2.5 rounded-full border transition-colors flex-shrink-0 ${
                 isSyncing 
                   ? 'bg-blue-100 text-blue-600 border-blue-300 animate-spin' 
                   : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
