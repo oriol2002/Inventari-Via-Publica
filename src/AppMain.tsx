@@ -91,7 +91,22 @@ const App: React.FC = () => {
       const ref = doc(firebaseDb, 'user_profiles', user.uid);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        const profile = snap.data() as UserProfile;
+        const existing = snap.data() as UserProfile;
+        const email = user.email.toLowerCase();
+        const isAgents = email === 'agentscivics@gmail.com';
+        const isOriol = email.startsWith('oriol2002');
+        const enforced: UserProfile = {
+          ...existing,
+          role: isAgents ? 'user' : 'admin',
+          allowedSections: isAgents
+            ? ['agents-civics']
+            : (isOriol ? ['mobilitat', 'administrador'] : (existing.allowedSections || ['mobilitat', 'agents-civics', 'administrador'])),
+          defaultSection: isAgents ? 'agents-civics' : (isOriol ? 'mobilitat' : (existing.defaultSection || 'mobilitat'))
+        };
+        if (JSON.stringify(existing) !== JSON.stringify(enforced)) {
+          await setDoc(ref, enforced, { merge: true });
+        }
+        const profile = enforced;
         setUserProfile(profile);
         if (profile.role === 'admin') {
           setActiveSection(null);
@@ -104,12 +119,15 @@ const App: React.FC = () => {
 
       const email = user.email.toLowerCase();
       const isAgents = email === 'agentscivics@gmail.com';
+        const isOriol = email.startsWith('oriol2002');
       const profile: UserProfile = {
         id: user.uid,
         email: user.email,
         role: isAgents ? 'user' : 'admin',
-        allowedSections: isAgents ? ['agents-civics'] : ['mobilitat', 'agents-civics', 'administrador'],
-        defaultSection: isAgents ? 'agents-civics' : 'mobilitat'
+          allowedSections: isAgents
+            ? ['agents-civics']
+            : (isOriol ? ['mobilitat', 'administrador'] : ['mobilitat', 'agents-civics', 'administrador']),
+          defaultSection: isAgents ? 'agents-civics' : (isOriol ? 'mobilitat' : 'mobilitat')
       };
 
       await setDoc(ref, profile, { merge: true });
@@ -360,7 +378,7 @@ const App: React.FC = () => {
             <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Selecciona apartat</h3>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Escull l'àmbit de treball</p>
             <div className="mt-6 grid gap-3">
-              {['mobilitat', 'agents-civics', 'administrador'].map((section) => (
+              {(userProfile?.allowedSections || ['mobilitat', 'agents-civics', 'administrador']).map((section) => (
                 <button
                   key={section}
                   onClick={async () => {
@@ -400,12 +418,20 @@ const App: React.FC = () => {
       <header className="bg-white border-b border-slate-300 px-[calc(1rem+env(safe-area-inset-left))] md:px-8 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] pr-[calc(1rem+env(safe-area-inset-right))] sticky top-0 z-50 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg flex-shrink-0">
-              <CloudIcon className="w-5 md:w-6 h-5 md:h-6" />
-            </div>
+            {activeSection === 'agents-civics' ? (
+              <div className="bg-white p-2 rounded-xl shadow-lg flex-shrink-0 border border-slate-200">
+                <img src="/LogoACivics.jfif" alt="Agents Cívics" className="w-6 md:w-7 h-6 md:h-7 object-contain" />
+              </div>
+            ) : (
+              <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg flex-shrink-0">
+                <CloudIcon className="w-5 md:w-6 h-5 md:h-6" />
+              </div>
+            )}
             <div className="flex flex-col min-w-0">
               <h1 className="text-lg md:text-xl font-black text-slate-900 leading-none tracking-tighter uppercase">TORTOSA</h1>
-              <p className="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">Inventari Via Pública</p>
+              <p className="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
+                {activeSection === 'agents-civics' ? 'Agents civis' : 'Inventari Via Pública'}
+              </p>
             </div>
           </div>
           
