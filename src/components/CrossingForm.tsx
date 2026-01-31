@@ -28,6 +28,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
   const [assetType, setAssetType] = useState<AssetType>(initialData?.assetType || AssetType.CROSSING);
   const [assetSubType, setAssetSubType] = useState<string>(initialData?.assetSubType || '');
+  const [signDetail, setSignDetail] = useState<string>(initialData?.signDetail || '');
   const [retentionLineLength, setRetentionLineLength] = useState<string>(
     initialData?.retentionLineLength ? String(initialData.retentionLineLength) : '0.40'
   );
@@ -121,6 +122,17 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     return mobilitatSubTypes[type] || [];
   };
 
+  const signDetailOptions: Record<string, string[]> = {
+    Prohibició: ['Entrada prohibida', 'Prohibit estacionar', 'Prohibit aturar', 'Velocitat màxima', 'Altres'],
+    Obligació: ['Fletxa dreta', 'Fletxa esquerra', 'Recte', 'Rotonda', 'Altres'],
+    Informació: ['Zona escolar', 'Hospital', 'Centre ciutat', 'Aparcament', 'Altres'],
+    Advertència: ['Pas de vianants', 'Perill', 'Obres', 'Risc esllavissada', 'Altres'],
+    Altres: ['Altres']
+  };
+
+  const isSignType = assetType === AssetType.SIGN || assetType === AssetType.SIGNS;
+  const currentSignDetails = isSignType ? (signDetailOptions[assetSubType] || []) : [];
+
   useEffect(() => {
     const contextTypes = getContextAssetTypes();
     if (!contextTypes.includes(assetType)) {
@@ -136,6 +148,20 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       setAssetSubType(options[0]);
     }
   }, [isAgentsCivicsContext, isMobilitatContext, assetType, assetSubType]);
+
+  useEffect(() => {
+    if (!isSignType) {
+      if (signDetail) setSignDetail('');
+      return;
+    }
+    if (!currentSignDetails.length) {
+      if (signDetail) setSignDetail('');
+      return;
+    }
+    if (!currentSignDetails.includes(signDetail)) {
+      setSignDetail(currentSignDetails[0]);
+    }
+  }, [isSignType, assetSubType, currentSignDetails, signDetail]);
 
   const STREET_NEIGHBORHOOD_KEY = 'mobilitat_street_neighborhood_map';
 
@@ -610,6 +636,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       lastPaintedDate: lastPainted,
       assetType,
       assetSubType: assetSubType || undefined,
+      signDetail: isSignType ? (signDetail || undefined) : undefined,
       retentionLineLength: assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció'
         ? Number(retentionLineLength) || 0.4
         : undefined,
@@ -738,6 +765,20 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                   className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
                 >
                   {getSubTypeOptions(assetType).map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {isSignType && currentSignDetails.length > 0 && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Senyal</label>
+                <select
+                  value={signDetail}
+                  onChange={(e) => setSignDetail(e.target.value)}
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+                >
+                  {currentSignDetails.map(option => (
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
