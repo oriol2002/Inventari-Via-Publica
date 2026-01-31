@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { PedestrianCrossing, CrossingState, AssetType } from '../types';
 import { 
   ArrowLeftIcon, 
+  ArrowDownTrayIcon,
   PrinterIcon,
   EnvelopeIcon,
   ChatBubbleLeftRightIcon,
@@ -172,10 +173,29 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     const subject = reportTitle || `Informe ${city}`;
     const body = `${subject}\nPDF: ${pdfUrl}`;
     return {
-      mailto: `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(body)}`
+      subject,
+      body,
+      url: pdfUrl
     };
   }, [pdfUrl, reportTitle, city]);
+
+  const handleSharePdf = async () => {
+    if (!pdfSharePayload) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: pdfSharePayload.subject,
+          text: pdfSharePayload.body,
+          url: pdfSharePayload.url
+        });
+        return;
+      }
+      window.open(pdfSharePayload.url, '_blank');
+    } catch (error) {
+      console.warn('Error sharing PDF:', error);
+      window.open(pdfSharePayload.url, '_blank');
+    }
+  };
 
   const generateCompactPdfAndUpload = async () => {
     if (isPdfBuilding) return;
@@ -345,21 +365,22 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             {pdfSharePayload && (
               <>
                 <button
-                  onClick={() => window.open(pdfSharePayload.mailto, '_blank')}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
-                  title="Compartir PDF per correu"
-                >
-                  <EnvelopeIcon className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF Email</span>
-                </button>
-                <button
-                  onClick={() => window.open(pdfSharePayload.whatsapp, '_blank')}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
-                  title="Compartir PDF per WhatsApp"
+                  onClick={handleSharePdf}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-slate-800 transition-all"
+                  title="Compartir PDF lleuger"
                 >
                   <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF WhatsApp</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Compartir PDF</span>
                 </button>
+                <a
+                  href={pdfSharePayload.url}
+                  download
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+                  title="Descarregar PDF lleuger"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF lleuger</span>
+                </a>
               </>
             )}
             <button
@@ -549,21 +570,22 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           {pdfSharePayload && (
             <>
               <button
-                onClick={() => window.open(pdfSharePayload.mailto, '_blank')}
-                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
-                title="Compartir PDF per correu"
-              >
-                <EnvelopeIcon className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF Email</span>
-              </button>
-              <button
-                onClick={() => window.open(pdfSharePayload.whatsapp, '_blank')}
-                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
-                title="Compartir PDF per WhatsApp"
+                onClick={handleSharePdf}
+                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-slate-900 text-white rounded-xl shadow-lg hover:bg-slate-800 transition-all"
+                title="Compartir PDF lleuger"
               >
                 <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF WhatsApp</span>
+                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Compartir PDF</span>
               </button>
+              <a
+                href={pdfSharePayload.url}
+                download
+                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+                title="Descarregar PDF lleuger"
+              >
+                <ArrowDownTrayIcon className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF lleuger</span>
+              </a>
             </>
           )}
           <button
