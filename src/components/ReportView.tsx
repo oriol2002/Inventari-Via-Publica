@@ -32,6 +32,7 @@ interface Props {
   reportId?: string;
   reportCreatedBy?: string;
   accentColor?: string;
+  activeSection: 'mobilitat' | 'agents-civics' | 'administrador';
   onBack: () => void;
   city: string;
   aiAnalysis?: string;
@@ -39,13 +40,16 @@ interface Props {
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e', '#a855f7'];
 
-const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, accentColor: accentColorProp, onBack, city, aiAnalysis }) => {
+const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, accentColor: accentColorProp, activeSection, onBack, city, aiAnalysis }) => {
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [isPdfBuilding, setIsPdfBuilding] = useState(false);
   const accentColor = accentColorProp || '#2563eb';
   const accentBg = accentColor === '#dc2626' ? 'rgba(220,38,38,0.1)' : 'rgba(37,99,235,0.1)';
+  const isAgentsReport = activeSection === 'agents-civics';
+  const logoPrimary = `${import.meta.env.BASE_URL}LogoACivics.jfif`;
+  const logoSecondary = `${import.meta.env.BASE_URL}logo192.png`;
 
   const generatePDF = () => {
     if (!reportRef.current) {
@@ -337,6 +341,12 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stats.total} Actius</p>
             </div>
           </div>
+          <div className="hidden md:flex items-center gap-2">
+            {isAgentsReport && (
+              <img src={logoPrimary} alt="Agents Cívics" className="h-6 w-auto object-contain" />
+            )}
+            <img src={logoSecondary} alt="Ajuntament" className="h-6 w-auto object-contain" />
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={generateCompactPdfAndUpload}
@@ -368,22 +378,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                 </a>
               </>
             )}
-            <button
-              onClick={() => window.open(sharePayload.mailto, '_blank')}
-              className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
-              title="Compartir per correu"
-            >
-              <EnvelopeIcon className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Email</span>
-            </button>
-            <button
-              onClick={() => window.open(sharePayload.whatsapp, '_blank')}
-              className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
-              title="Compartir per WhatsApp"
-            >
-              <ChatBubbleLeftRightIcon className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
-            </button>
             <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95" style={{ backgroundColor: accentColor }}>
               <PrinterIcon className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
@@ -542,6 +536,12 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{itemsToDisplay.length} Actius reportats</p>
           </div>
         </div>
+        <div className="hidden md:flex items-center gap-2">
+          {isAgentsReport && (
+            <img src={logoPrimary} alt="Agents Cívics" className="h-6 w-auto object-contain" />
+          )}
+          <img src={logoSecondary} alt="Ajuntament" className="h-6 w-auto object-contain" />
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={generateCompactPdfAndUpload}
@@ -573,22 +573,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               </a>
             </>
           )}
-          <button
-            onClick={() => window.open(sharePayload.mailto, '_blank')}
-            className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
-            title="Compartir per correu"
-          >
-            <EnvelopeIcon className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Email</span>
-          </button>
-          <button
-            onClick={() => window.open(sharePayload.whatsapp, '_blank')}
-            className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
-            title="Compartir per WhatsApp"
-          >
-            <ChatBubbleLeftRightIcon className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
-          </button>
             <button
               onClick={generatePDF}
               className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95"
