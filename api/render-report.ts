@@ -20,17 +20,23 @@ export default async function handler(req: any, res: any) {
   let browser: puppeteer.Browser | null = null;
   try {
     const chromiumRoot = path.resolve('node_modules/@sparticuz/chromium');
-    const libPath = path.join(chromiumRoot, 'lib');
-    const fontPath = path.join(chromiumRoot, 'fonts');
-    process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
-      ? `${process.env.LD_LIBRARY_PATH}:${libPath}`
-      : libPath;
-    process.env.FONTCONFIG_PATH = process.env.FONTCONFIG_PATH || fontPath;
+    const nodeLibPath = path.join(chromiumRoot, 'lib');
+    const nodeFontPath = path.join(chromiumRoot, 'fonts');
 
-    const libNssPath = path.join(libPath, 'libnss3.so');
-    if (!fs.existsSync(libNssPath)) {
-      res.status(500).json({ error: `Missing libnss3.so at ${libNssPath}` });
-      return;
+    const tmpLibPath = path.join('/tmp', 'chromium', 'lib');
+    const tmpFontPath = path.join('/tmp', 'chromium', 'fonts');
+
+    const libCandidates = [tmpLibPath, nodeLibPath].filter((p) => fs.existsSync(p));
+    if (libCandidates.length > 0) {
+      const libs = libCandidates.join(':');
+      process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
+        ? `${process.env.LD_LIBRARY_PATH}:${libs}`
+        : libs;
+    }
+
+    if (!process.env.FONTCONFIG_PATH) {
+      if (fs.existsSync(tmpFontPath)) process.env.FONTCONFIG_PATH = tmpFontPath;
+      else if (fs.existsSync(nodeFontPath)) process.env.FONTCONFIG_PATH = nodeFontPath;
     }
 
     const { html } = req.body || {};
