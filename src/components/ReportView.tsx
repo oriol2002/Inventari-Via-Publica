@@ -602,7 +602,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <div key={pageIndex} className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
               <div className="h-full flex flex-col">
                 <header className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: accentColor }}>Detall Elements {city} (Part {pageIndex + 1})</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: accentColor }}>Incidencies Via Pública (Part {pageIndex + 1})</h3>
                   <div className="text-[9px] font-black text-slate-400">Exp. #{internalId.replace('REP-', '')}</div>
                 </header>
 
@@ -666,8 +666,8 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-slate-200 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                  <span>Auditoria Vial • {city}</span>
-                  <span>Pàgina {pageIndex + 2} de {itemChunks.length + 1}</span>
+                  <span>Incidencies Via Publica • {city}</span>
+                  <span>Pàgina {pageIndex + 1} de {itemChunks.length}</span>
                 </div>
               </div>
             </div>
