@@ -1,5 +1,6 @@
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
+import path from 'path';
 
 export const config = {
   api: {
@@ -17,6 +18,12 @@ export default async function handler(req: any, res: any) {
 
   let browser: puppeteer.Browser | null = null;
   try {
+    const chromiumRoot = path.resolve('node_modules/@sparticuz/chromium');
+    const libPath = path.join(chromiumRoot, 'lib');
+    process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
+      ? `${process.env.LD_LIBRARY_PATH}:${libPath}`
+      : libPath;
+
     const { html } = req.body || {};
     if (!html || typeof html !== 'string') {
       res.status(400).json({ error: 'Missing html' });
