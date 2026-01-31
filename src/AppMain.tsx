@@ -440,6 +440,17 @@ const App: React.FC = () => {
                 {activeSection === 'agents-civics' ? 'Agents cívics' : 'Inventari Via Pública'}
               </p>
             </div>
+            {userProfile?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => setShowSectionChooser(true)}
+                className="ml-1 md:ml-2 px-2.5 md:px-3 py-1.5 md:py-2 rounded-xl bg-slate-900 text-white text-[8px] md:text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg hover:bg-slate-800 transition-colors"
+                title="Canviar apartat"
+              >
+                <ChevronDownIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Canviar</span>
+              </button>
+            )}
           </div>
           
           <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
