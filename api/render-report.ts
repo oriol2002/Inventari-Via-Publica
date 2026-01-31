@@ -1,12 +1,21 @@
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb'
+    }
+  }
+};
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
+  let browser: puppeteer.Browser | null = null;
   try {
     const { html } = req.body || {};
     if (!html || typeof html !== 'string') {
@@ -15,15 +24,17 @@ export default async function handler(req: any, res: any) {
     }
 
     const executablePath = await chromium.executablePath();
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: chromium.headless
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true
     });
 
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+    await page.emulateMediaType('screen');
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -37,7 +48,16 @@ export default async function handler(req: any, res: any) {
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).send(pdfBuffer);
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to render PDF';
     console.error('Render PDF error:', error);
-    res.status(500).json({ error: 'Failed to render PDF' });
+    res.status(500).json({ error: message });
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        // ignore
+      }
+    }
   }
 }
