@@ -710,7 +710,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           </div>
         )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus d'Element</label>
               <select
@@ -723,7 +723,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                     setAssetSubType(options[0] || '');
                   }
                 }}
-                className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+                className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
               >
                 {(isAgentsCivicsContext ? agentsCivicsAssetTypes : mobilitatAssetTypes)
                   .map(t => <option key={t} value={t}>{t}</option>)}
@@ -735,7 +735,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                 <select
                   value={assetSubType}
                   onChange={(e) => setAssetSubType(e.target.value)}
-                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
                 >
                   {getSubTypeOptions(assetType).map(option => (
                     <option key={option} value={option}>{option}</option>
@@ -745,10 +745,27 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
             )}
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Estat Conservació</label>
-              <select value={state} onChange={(e) => setState(e.target.value as CrossingState)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
+              <select value={state} onChange={(e) => setState(e.target.value as CrossingState)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
                 {Object.values(CrossingState).map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
+            {assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants' && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants (m)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={crossingWidth}
+                  onChange={(e) => setCrossingWidth(e.target.value)}
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
+                />
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Llargada estàndard: 4 m</p>
+                <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">
+                  M²: {((Number(crossingWidth) || 0) * 4).toFixed(2)}
+                </p>
+              </div>
+            )}
           </div>
 
           {assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció' && (
@@ -764,26 +781,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                   className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
                 />
                 <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Ample estàndard: 0.40 m</p>
-              </div>
-            </div>
-          )}
-
-          {assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants (m)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={crossingWidth}
-                  onChange={(e) => setCrossingWidth(e.target.value)}
-                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
-                />
-                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Llargada estàndard: 4 m</p>
-                <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">
-                  M²: {((Number(crossingWidth) || 0) * 4).toFixed(2)}
-                </p>
               </div>
             </div>
           )}
