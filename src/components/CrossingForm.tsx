@@ -461,7 +461,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     });
   };
 
-  const editorImage = image || imageThumb || null;
+  const editorImage = imageThumb || image || null;
 
   if (showImageEditor && editorImage) {
     return (
@@ -533,7 +533,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           </div>
         ) : (
           <div className="aspect-video rounded-3xl overflow-hidden relative group bg-slate-100 border border-slate-300 shrink-0">
-            <img src={image} className="w-full h-full object-cover" alt="Preview" />
+            <img src={imageThumb || image || ''} className="w-full h-full object-cover" alt="Preview" />
             <div className="absolute bottom-3 right-3 flex gap-2">
               <button type="button" onClick={() => setShowImageEditor(true)} className="p-2.5 bg-black/60 text-white rounded-xl hover:bg-blue-600 transition-colors backdrop-blur-sm shadow-xl"><PencilIcon className="w-4 h-4" /></button>
               <button type="button" onClick={() => setImage(null)} className="p-2.5 bg-black/60 text-white rounded-xl hover:bg-rose-600 transition-colors backdrop-blur-sm shadow-xl"><XMarkIcon className="w-4 h-4" /></button>

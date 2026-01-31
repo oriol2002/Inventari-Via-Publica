@@ -128,6 +128,12 @@ const App: React.FC = () => {
       console.error("Error marcant alerta com a llegida:", error);
     }
   };
+
+  const handleDismissAlerts = async (ids: string[]) => {
+    for (const id of ids) {
+      await handleDismissAlert(id);
+    }
+  };
   
   const handleQuickUpdate = async (id: string, updates: Partial<PedestrianCrossing>) => {
     const crossingToUpdate = crossings.find(c => c.id === id);
@@ -412,6 +418,7 @@ const App: React.FC = () => {
           setIsFormOpen(true);
           setShowNotifications(false);
         }}
+        onMarkRead={handleDismissAlerts}
         onGenerateReport={(selectedAlerts) => {
           handleCreateReport(selectedAlerts, 'maintenance');
         }}

@@ -19,9 +19,10 @@ interface Props {
   alerts: PedestrianCrossing[];
   onAlertClick?: (alert: PedestrianCrossing) => void;
   onGenerateReport?: (selectedAlerts: PedestrianCrossing[]) => void;
+  onMarkRead?: (ids: string[]) => void;
 }
 
-const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertClick, onGenerateReport }) => {
+const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertClick, onGenerateReport, onMarkRead }) => {
   const [selectedAlerts, setSelectedAlerts] = useState<Set<string>>(new Set());
 
   if (!isOpen) return null;
@@ -61,6 +62,13 @@ const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertC
       onGenerateReport(selectedCrossings);
       onClose();
     }
+  };
+
+  const handleMarkRead = () => {
+    const ids = Array.from(selectedAlerts);
+    if (ids.length === 0) return;
+    onMarkRead?.(ids);
+    setSelectedAlerts(new Set());
   };
 
   return (
@@ -176,6 +184,15 @@ const NotificationCenter: React.FC<Props> = ({ isOpen, onClose, alerts, onAlertC
         </div>
 
         <div className="p-8 border-t border-slate-200 bg-slate-50 space-y-3">
+          {selectedAlerts.size > 0 && (
+            <button
+              onClick={handleMarkRead}
+              className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              Marcar com a llegida ({selectedAlerts.size})
+            </button>
+          )}
           {selectedAlerts.size > 0 && (
             <button
               onClick={handleGenerateReport}

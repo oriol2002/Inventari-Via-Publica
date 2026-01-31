@@ -36,12 +36,11 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
   const markersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('satellite');
   const [showFilters, setShowFilters] = useState(false);
-  const watchIdRef = useRef<number | null>(null);
   
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const labelsLayerRef = useRef<L.TileLayer | null>(null);
@@ -174,55 +173,12 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
     updateMapLayers(mapStyle);
   }, [mapStyle]);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-    if (!isFollowing) {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation?.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      return;
-    }
-
-    if (!('geolocation' in navigator)) {
-      alert('Geolocalització no disponible en aquest dispositiu.');
-      setIsFollowing(false);
-      return;
-    }
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const latLng: [number, number] = [latitude, longitude];
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLatLng(latLng);
-        } else if (mapRef.current) {
-          userMarkerRef.current = L.marker(latLng).addTo(mapRef.current);
-        }
-        if (mapRef.current) {
-          mapRef.current.setView(latLng, Math.max(mapRef.current.getZoom(), 16), { animate: true });
-        }
-      },
-      () => {
-        alert('No s\'ha pogut obtenir la ubicació.');
-        setIsFollowing(false);
-      },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
-    );
-
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation?.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
-  }, [isFollowing]);
-
   const handleLocateUser = () => {
     if (!('geolocation' in navigator)) {
       alert('Geolocalització no disponible en aquest dispositiu.');
       return;
     }
+    setIsLocatingUser(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const latLng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
@@ -232,8 +188,12 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
           userMarkerRef.current = L.marker(latLng).addTo(mapRef.current);
         }
         mapRef.current?.setView(latLng, Math.max(mapRef.current.getZoom(), 16), { animate: true });
+        setIsLocatingUser(false);
       },
-      () => alert('No s\'ha pogut obtenir la ubicació.'),
+      () => {
+        alert('No s\'ha pogut obtenir la ubicació.');
+        setIsLocatingUser(false);
+      },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
     );
   };
@@ -324,11 +284,8 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
       <div ref={mapContainerRef} className="flex-1 z-0 h-full w-full leaflet-container" />
       <div className="absolute bottom-6 right-6 z-[500] flex flex-col gap-3">
         <button onClick={() => setMapStyle(mapStyle === 'satellite' ? 'standard' : 'satellite')} className="p-3.5 bg-white text-slate-800 rounded-2xl shadow-xl border border-slate-100" title="Canviar capes"><Square2StackIcon className="w-5 h-5" /></button>
-        <button onClick={handleLocateUser} className="p-3.5 bg-white text-slate-700 rounded-2xl shadow-xl border border-slate-100" title="Localitzar-me">
-          <PaperAirplaneIcon className="w-5 h-5 transform rotate-45" />
-        </button>
-        <button onClick={() => setIsFollowing(!isFollowing)} className={`p-3.5 rounded-2xl shadow-xl border border-slate-100 ${isFollowing ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`} title="Seguiment">
-          <PaperAirplaneIcon className={`w-5 h-5 transform ${isFollowing ? '-rotate-45' : 'rotate-45'}`} />
+        <button onClick={handleLocateUser} className={`p-3.5 rounded-2xl shadow-xl border border-slate-100 ${isLocatingUser ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`} title="Localitzar-me">
+          <PaperAirplaneIcon className={`w-5 h-5 transform ${isLocatingUser ? '-rotate-45' : 'rotate-45'}`} />
         </button>
       </div>
     </div>

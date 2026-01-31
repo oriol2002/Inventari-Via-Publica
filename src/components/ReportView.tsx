@@ -443,7 +443,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                   {chunk.map((item) => (
                     <div key={item.id} className="report-item-card flex flex-col md:flex-row h-auto md:h-[75mm] gap-4 md:gap-6 py-4 border-b border-slate-200 last:border-0 print:h-auto print:mb-8 print:flex-row print:flex print:gap-6 print:break-inside-avoid">
                       <div className="w-full h-48 md:w-[85mm] md:h-full rounded-2xl overflow-hidden border border-slate-300 flex-shrink-0 shadow-sm print:h-[60mm] print:w-[85mm]">
-                        <img src={item.image} className="w-full h-full object-cover print:object-contain bg-slate-100" alt="" />
+                        <img src={item.imageThumb || item.image} className="w-full h-full object-cover print:object-contain bg-slate-100" alt="" />
                       </div>
 
                       <div className="flex-1 flex flex-col justify-between py-1">
