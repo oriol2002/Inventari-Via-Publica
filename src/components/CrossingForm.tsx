@@ -772,7 +772,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
               </div>
             )}
             {isSignType && currentSignDetails.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-1 mt-3">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Senyal</label>
                 <select
                   value={signDetail}
