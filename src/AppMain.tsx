@@ -284,7 +284,8 @@ const App: React.FC = () => {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
-    const reportId = `MOB${year}${month}${day}${hours}${minutes}${seconds}`;
+    const prefix = activeSection === 'agents-civics' ? 'CIV' : 'MOB';
+    const reportId = `${prefix}${year}${month}${day}${hours}${minutes}${seconds}`;
 
     const newReport: SavedReport = {
       id: reportId,

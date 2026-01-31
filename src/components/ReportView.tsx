@@ -390,7 +390,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                <div className="border-b-[4px] border-blue-600 pb-6 mb-8 flex justify-between items-end">
                   <div>
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter">Informe Executiu</h1>
-                    <p className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">Àrea de Mobilitat • {city}</p>
+                    <p className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">Àrea Espai Public • {city}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Expedient</div>
@@ -510,7 +510,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                </div>
 
                <div className="mt-auto pt-4 border-t border-slate-200 flex justify-between text-[8px] font-black text-slate-500 uppercase">
-                  <span>Àrea de Mobilitat • {city}</span>
+                  <span>Àrea Espai Public • {city}</span>
                   <span>Pàgina 2 de 2</span>
                </div>
             </div>
@@ -601,7 +601,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                   <h1 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-[0.9]">
                     Informe<br/><span className="text-blue-600">{city}</span>
                   </h1>
-                  <p className="text-[10px] md:text-[12px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-6">Àrea de Mobilitat • {city}</p>
+                  <p className="text-[10px] md:text-[12px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-6">Àrea Espai Public • {city}</p>
                 </div>
                 <div className="text-right">
                   <div className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest">Codi Expedient</div>
@@ -649,7 +649,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               </div>
 
               <div className="mt-auto pt-10 border-t border-slate-200 flex justify-between items-center text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Àrea de Mobilitat • {city}</span>
+                <span>Àrea Espai Public • {city}</span>
                 <span>Pàgina 1 de {itemChunks.length + 1}</span>
               </div>
             </div>
