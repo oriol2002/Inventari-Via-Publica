@@ -1,6 +1,7 @@
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 import path from 'path';
+import fs from 'fs';
 
 export const config = {
   api: {
@@ -20,9 +21,17 @@ export default async function handler(req: any, res: any) {
   try {
     const chromiumRoot = path.resolve('node_modules/@sparticuz/chromium');
     const libPath = path.join(chromiumRoot, 'lib');
+    const fontPath = path.join(chromiumRoot, 'fonts');
     process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
       ? `${process.env.LD_LIBRARY_PATH}:${libPath}`
       : libPath;
+    process.env.FONTCONFIG_PATH = process.env.FONTCONFIG_PATH || fontPath;
+
+    const libNssPath = path.join(libPath, 'libnss3.so');
+    if (!fs.existsSync(libNssPath)) {
+      res.status(500).json({ error: `Missing libnss3.so at ${libNssPath}` });
+      return;
+    }
 
     const { html } = req.body || {};
     if (!html || typeof html !== 'string') {
