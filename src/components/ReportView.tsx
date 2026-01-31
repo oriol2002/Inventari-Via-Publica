@@ -597,45 +597,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       <div ref={reportRef} id="report-container-div" className="flex-1 overflow-y-auto p-0 md:p-12 bg-slate-100 md:bg-slate-300/50 print:bg-white print:p-0 print:overflow-visible print:block">
         <div className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
           
-          {/* PORTADA */}
-          <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0">
-            <div className="h-full flex flex-col">
-              <div className="border-b-[6px] pb-10 mb-12 flex justify-between items-end" style={{ borderColor: accentColor }}>
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-[0.9]">
-                    Informe<br/><span style={{ color: accentColor }}>{city}</span>
-                  </h1>
-                  <p className="text-[10px] md:text-[12px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-6">Àrea Espai Public • {city}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest">Codi Expedient</div>
-                  <div className="text-xl md:text-2xl font-black text-slate-900">#{internalId.replace('REP-', '')}</div>
-                </div>
-              </div>
-
-              <div className="space-y-8 md:space-y-12">
-                <section>
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Resum</h3>
-                  <div className="grid grid-cols-2 gap-4 md:gap-6">
-                    <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 text-center">
-                      <div className="text-2xl md:text-3xl font-black text-slate-900">{itemsToDisplay.length}</div>
-                      <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Actius Analitzats</div>
-                    </div>
-                    <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 text-center">
-                      <div className="text-2xl md:text-3xl font-black uppercase" style={{ color: accentColor }}>{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
-                      <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Tipologia d'Informe</div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="mt-auto pt-10 border-t border-slate-200 flex justify-between items-center text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Àrea Espai Public • {city}</span>
-                <span>Pàgina 1 de {itemChunks.length + 1}</span>
-              </div>
-            </div>
-          </div>
-
           {/* PÀGINES DE CONTINGUT */}
           {itemChunks.map((chunk, pageIndex) => (
             <div key={pageIndex} className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">

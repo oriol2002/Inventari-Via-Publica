@@ -757,14 +757,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                   .map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            {!(assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció') && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Estat Conservació</label>
-                <select value={state} onChange={(e) => setState(e.target.value as CrossingState)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
-                  {Object.values(CrossingState).map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
             {(isAgentsCivicsContext || isMobilitatContext) && (
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus Relacionat</label>
@@ -779,9 +771,17 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                 </select>
               </div>
             )}
+            {!(assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció') && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Estat Conservació</label>
+                <select value={state} onChange={(e) => setState(e.target.value as CrossingState)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700">
+                  {Object.values(CrossingState).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
             {assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants' && (
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants (m)</label>
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants</label>
                 <input
                   type="number"
                   step="0.1"
