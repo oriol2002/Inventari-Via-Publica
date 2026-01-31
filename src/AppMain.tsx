@@ -135,24 +135,6 @@ const App: React.FC = () => {
     }
   };
   
-  const handleQuickUpdate = async (id: string, updates: Partial<PedestrianCrossing>) => {
-    const crossingToUpdate = crossings.find(c => c.id === id);
-    if (!crossingToUpdate) return;
-
-    const updatedCrossing = {
-      ...crossingToUpdate,
-      ...updates,
-      updatedAt: Date.now()
-    };
-
-    setCrossings(prev => prev.map(c => c.id === id ? updatedCrossing : c));
-
-    try {
-      await dbService.save(updatedCrossing);
-    } catch (error) {
-      console.error("Error en punt de control (guardat localment):", error);
-    }
-  };
 
   const handleEditCrossing = (crossing: PedestrianCrossing) => {
     setEditingCrossing(crossing);
@@ -373,7 +355,6 @@ const App: React.FC = () => {
                     currentFilters={filters} 
                     onFilterChange={setFilters}
                     onEditRequested={handleEditCrossing} 
-                    onQuickUpdate={handleQuickUpdate}
                     city="Tortosa"
                   />
                 </div>

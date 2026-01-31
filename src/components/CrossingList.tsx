@@ -276,12 +276,6 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
                       <CalendarIcon className="w-3 h-3" />
                       {new Date(crossing.lastPaintedDate).toLocaleDateString('ca-ES', { month: 'short', year: '2-digit' }).replace('.', '').toUpperCase()}
                     </div>
-                    {crossing.lastInspectedDate && (
-                        <div className="text-[7px] font-bold text-emerald-600 flex items-center gap-0.5" title="Data darrer Punt de Control">
-                        <EyeIcon className="w-3 h-3" />
-                        {new Date(crossing.lastInspectedDate).toLocaleDateString('ca-ES', { month: 'short', year: '2-digit' }).replace('.', '').toUpperCase()}
-                        </div>
-                    )}
                     <div className="text-[7px] font-bold text-slate-400" title="Última actualització">
                       {new Date(crossing.updatedAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })} · {new Date(crossing.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
                     </div>

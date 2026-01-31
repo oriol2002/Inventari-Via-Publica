@@ -14,7 +14,6 @@ interface Props {
   currentFilters: FilterOptions;
   onFilterChange: (f: Partial<FilterOptions>) => void;
   onEditRequested?: (crossing: PedestrianCrossing) => void;
-  onQuickUpdate?: (id: string, updates: Partial<PedestrianCrossing>) => void;
   city: string;
 }
 
@@ -30,7 +29,7 @@ const getStateColor = (state: CrossingState) => {
   }
 };
 
-const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChange, onEditRequested, onQuickUpdate, city }) => {
+const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChange, onEditRequested, city }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -128,10 +127,6 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
                 <p style="margin:0 0 10px 0; color:#2563eb; font-weight:800; font-size:9px; text-transform: uppercase; letter-spacing: 0.05em;">
                   ${crossing.location.neighborhood || city} • ${crossing.assetType}
                 </p>
-                ${crossing.lastInspectedDate ? `
-                <p style="margin:-5px 0 10px 0; color:#059669; font-weight:800; font-size:8px; text-transform: uppercase; display:flex; align-items:center; gap:2px;">
-                  ✅ REVISAT: ${new Date(crossing.lastInspectedDate).toLocaleDateString('ca-ES')}
-                </p>` : ''}
                 <p style="margin:0 0 10px 0; color:#94a3b8; font-weight:800; font-size:8px; text-transform: uppercase;">
                   ACTUALITZAT: ${new Date(crossing.updatedAt).toLocaleDateString('ca-ES')} · ${new Date(crossing.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -139,9 +134,6 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
                   <img src="${crossing.imageThumb || crossing.image}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover;" />
                 </div>
                 <div style="display:flex; gap:8px; margin-top:12px;">
-                   <button id="btn-check-${crossing.id}" style="flex:1; background:#10b981; color:white; border:none; padding:10px; border-radius:10px; font-weight:900; font-size:9px; cursor:pointer; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s;">
-                     ✅ Punt Control
-                   </button>
                    <button id="btn-edit-${crossing.id}" style="flex:1; background:#0f172a; color:white; border:none; padding:10px; border-radius:10px; font-weight:900; font-size:9px; cursor:pointer; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); transition: all 0.2s;">
                      Editar
                    </button>
@@ -152,19 +144,6 @@ const CrossingMap: React.FC<Props> = ({ crossings, currentFilters, onFilterChang
           setTimeout(() => {
             const btnEdit = document.getElementById(`btn-edit-${crossing.id}`);
             if (btnEdit && onEditRequested) btnEdit.onclick = () => onEditRequested(crossing);
-
-            const btnCheck = document.getElementById(`btn-check-${crossing.id}`);
-            if (btnCheck && onQuickUpdate) {
-                btnCheck.onclick = () => {
-                    const today = new Date().toISOString().split('T')[0];
-                    if (confirm('Vols registrar un Punt de Control (Inspecció Visual) avui?')) {
-                        onQuickUpdate(crossing.id, { lastInspectedDate: today });
-                        // Feedback visual simple
-                        btnCheck.style.backgroundColor = '#059669';
-                        btnCheck.innerText = 'VAL VIST! 👍';
-                    }
-                };
-            }
           }, 0);
         });
         markersRef.current.push(marker);

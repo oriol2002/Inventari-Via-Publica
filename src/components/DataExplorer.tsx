@@ -76,7 +76,7 @@ const DataExplorer: React.FC<Props> = ({ crossings, currentFilters, onFilterChan
 
   const handleExportCSV = () => {
     const data = getExportData();
-    const headers = ['ID', 'Tipus', 'Estat', 'Carrer', 'Número', 'Barri', 'Ciutat', 'Lat', 'Lng', 'Data Pintura', 'Data Inspecció', 'Notes'];
+    const headers = ['ID', 'Tipus', 'Estat', 'Carrer', 'Número', 'Barri', 'Ciutat', 'Lat', 'Lng', 'Data Pintura', 'Notes'];
     
     const rows = data.map(c => [
       c.id,
@@ -89,7 +89,6 @@ const DataExplorer: React.FC<Props> = ({ crossings, currentFilters, onFilterChan
       c.location.lat,
       c.location.lng,
       c.lastPaintedDate,
-      c.lastInspectedDate || '',
       `"${(c.notes || '').replace(/"/g, '""')}"`
     ]);
 

@@ -24,7 +24,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const [location, setLocation] = useState<Location | null>(initialData?.location || null);
   const [state, setState] = useState<CrossingState>(initialData?.state || CrossingState.GOOD);
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
-  const [lastInspected, setLastInspected] = useState<string>(initialData?.lastInspectedDate || '');
   const [assetType, setAssetType] = useState<AssetType>(initialData?.assetType || AssetType.CROSSING);
   const [notes, setNotes] = useState<string>(initialData?.notes || '');
   
@@ -505,7 +504,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       location: finalLocation,
       state,
       lastPaintedDate: lastPainted,
-      lastInspectedDate: lastInspected || undefined,
       assetType,
       notes: notes || '',
       createdAt: initialData?.createdAt || now,
@@ -720,10 +718,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Data Pintura</label>
               <input type="date" value={lastPainted} onChange={(e) => setLastPainted(e.target.value)} className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[12px] font-black outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest pl-1">Data Inspecció</label>
-              <input type="date" value={lastInspected} onChange={(e) => setLastInspected(e.target.value)} className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-[12px] font-black outline-none focus:ring-2 focus:ring-emerald-500/20 text-emerald-800" />
             </div>
           </div>
           

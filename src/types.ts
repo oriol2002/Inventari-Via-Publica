@@ -75,6 +75,8 @@ export const TORTOSA_BARRIS = [
   'Centre', 
   'Eixample', 
   'Ferreries', 
+  'Grup el Temple',
+  'Portals de Tortosa',
   'Rastre', 
   'Remolins', 
   'Santa Clara', 
