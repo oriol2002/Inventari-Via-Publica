@@ -52,6 +52,8 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   
   const shouldRecenter = useRef(true);
   const isAgentsCivicsContext = defaultGroup === 'agents-civics';
+  const CITY_NAME = 'Tortosa';
+  const NOMINATIM_VIEWBOX = '0.43,40.86,0.63,40.74';
 
   const agentsCivicsAssetTypes: AssetType[] = [
     AssetType.AWARENESS,
@@ -188,13 +190,13 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
 
   const fetchAddressFromCoords = async (lat: number, lng: number) => {
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=19&addressdetails=1`, {
         headers: { 'Accept-Language': 'ca' }
       });
       const data = await response.json();
       
       if (data && data.address) {
-        const road = data.address.road || data.address.pedestrian || data.address.footway || data.address.path || data.address.square || data.address.plaza || '';
+        const road = data.address.road || data.address.pedestrian || data.address.footway || data.address.path || data.address.square || data.address.plaza || data.name || '';
         const houseNumber = data.address.house_number || '';
         const mappedNeighborhood = getMappedNeighborhood(road);
         const neighborhood = mappedNeighborhood || data.address.neighbourhood || data.address.suburb || '';
@@ -228,12 +230,23 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   };
 
   const geocodeManualAddress = async (street?: string, number?: string) => {
-    if (!street || street.trim().length < 3 || !number || !number.trim()) return;
+    if (!street || street.trim().length < 3) return;
     try {
-      const query = `${street} ${number} Tortosa`;
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=es&addressdetails=1&limit=1`;
-      const res = await fetch(url, { headers: { 'Accept-Language': 'ca' } });
-      const data = await res.json();
+      const hasNumber = !!(number && number.trim());
+      const streetParam = hasNumber ? `${number} ${street}` : street;
+      const baseUrl = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=es';
+      const viewbox = `&viewbox=${encodeURIComponent(NOMINATIM_VIEWBOX)}&bounded=1`;
+      const url = `${baseUrl}&street=${encodeURIComponent(streetParam)}&city=${encodeURIComponent(CITY_NAME)}${viewbox}`;
+
+      let res = await fetch(url, { headers: { 'Accept-Language': 'ca' } });
+      let data = await res.json();
+
+      if ((!data || data.length === 0) && hasNumber) {
+        const fallbackUrl = `${baseUrl}&street=${encodeURIComponent(street)}&city=${encodeURIComponent(CITY_NAME)}${viewbox}`;
+        res = await fetch(fallbackUrl, { headers: { 'Accept-Language': 'ca' } });
+        data = await res.json();
+      }
+
       if (!data || data.length === 0) return;
 
       const best = data[0];
@@ -242,13 +255,15 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       const neighborhood = mappedNeighborhood || addr.suburb || addr.neighbourhood || addr.city_district || '';
       const lat = parseFloat(best.lat);
       const lng = parseFloat(best.lon);
+      const resolvedStreet = addr.road || addr.pedestrian || addr.footway || addr.path || addr.square || addr.plaza || street;
+      const resolvedNumber = addr.house_number || number || '';
 
       setLocation(prev => {
         const base = prev || { lat, lng };
         return {
           ...base,
-          street: street,
-          number: number,
+          street: resolvedStreet,
+          number: resolvedNumber,
           lat,
           lng,
           neighborhood: neighborhood || base.neighborhood || '',
