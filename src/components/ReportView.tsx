@@ -186,6 +186,17 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     if (!pdfSharePayload) return;
     try {
       if (navigator.share) {
+        try {
+          const res = await fetch(pdfSharePayload.url);
+          const blob = await res.blob();
+          const file = new File([blob], `${pdfSharePayload.subject}.pdf`, { type: 'application/pdf' });
+          if ((navigator as any).canShare?.({ files: [file] })) {
+            await navigator.share({ title: pdfSharePayload.subject, files: [file] });
+            return;
+          }
+        } catch {
+          // fallback below
+        }
         await navigator.share({
           title: pdfSharePayload.subject,
           text: pdfSharePayload.body,
