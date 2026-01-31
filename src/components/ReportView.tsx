@@ -4,6 +4,8 @@ import { PedestrianCrossing, CrossingState, AssetType } from '../types';
 import { 
   ArrowLeftIcon, 
   PrinterIcon,
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import { 
@@ -130,6 +132,32 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     return reportType === 'technical' ? crossings.filter(c => c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS) : crossings;
   }, [crossings, reportType]);
 
+  const shareItems = useMemo(() => (reportType === 'statistical' ? crossings : itemsToDisplay), [reportType, crossings, itemsToDisplay]);
+  const shareMaxItems = 20;
+
+  const sharePayload = useMemo(() => {
+    const subject = reportTitle || `Informe ${city}`;
+    const visibleItems = shareItems.slice(0, shareMaxItems);
+    const itemsText = visibleItems.map((c, index) => {
+      const address = [c.location.street, c.location.number].filter(Boolean).join(' ').trim() || 'Sense adreça';
+      const subtype = (c as any).assetSubType ? ` · ${(c as any).assetSubType}` : '';
+      const mapsLink = (c.location.lat && c.location.lng)
+        ? `https://www.google.com/maps?q=${c.location.lat},${c.location.lng}`
+        : '';
+      return `${index + 1}. ${address} · ${c.assetType}${subtype}${mapsLink ? `\n   ${mapsLink}` : ''}`;
+    }).join('\n');
+
+    const extraCount = shareItems.length > shareMaxItems ? `\n\n(+${shareItems.length - shareMaxItems} més)` : '';
+    const body = `${subject}\n${shareItems.length} elements\n\n${itemsText}${extraCount}`.trim();
+
+    return {
+      subject,
+      body,
+      mailto: `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(body)}`
+    };
+  }, [shareItems, reportTitle, city]);
+
   const itemChunks = useMemo(() => {
     const chunks: PedestrianCrossing[][] = [];
     // Utilitzem 3 items per pàgina per defecte
@@ -201,6 +229,22 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.open(sharePayload.mailto, '_blank')}
+              className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+              title="Compartir per correu"
+            >
+              <EnvelopeIcon className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Email</span>
+            </button>
+            <button
+              onClick={() => window.open(sharePayload.whatsapp, '_blank')}
+              className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
+              title="Compartir per WhatsApp"
+            >
+              <ChatBubbleLeftRightIcon className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
+            </button>
             <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
               <PrinterIcon className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
@@ -360,6 +404,22 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.open(sharePayload.mailto, '_blank')}
+            className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+            title="Compartir per correu"
+          >
+            <EnvelopeIcon className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Email</span>
+          </button>
+          <button
+            onClick={() => window.open(sharePayload.whatsapp, '_blank')}
+            className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
+            title="Compartir per WhatsApp"
+          >
+            <ChatBubbleLeftRightIcon className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
+          </button>
           <button
             onClick={generatePDF}
             className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95"
