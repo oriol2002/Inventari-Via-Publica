@@ -43,6 +43,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const labelsLayerRef = useRef<L.TileLayer | null>(null);
   const searchTimeout = useRef<any>(null);
+  const geocodeTimeout = useRef<any>(null);
   
   const shouldRecenter = useRef(true);
 
@@ -169,6 +170,56 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     } catch (error) {
       console.error("Error en reverse geocoding:", error);
     }
+  };
+
+  const updateMarkerPosition = (lat: number, lng: number) => {
+    if (markerRef.current) {
+      markerRef.current.setLatLng([lat, lng]);
+    }
+    if (mapRef.current && shouldRecenter.current) {
+      mapRef.current.setView([lat, lng], Math.max(mapRef.current.getZoom(), 19));
+    }
+  };
+
+  const geocodeManualAddress = async (street?: string, number?: string) => {
+    if (!street || street.trim().length < 3 || !number || !number.trim()) return;
+    try {
+      const query = `${street} ${number} Tortosa`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=es&addressdetails=1&limit=1`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'ca' } });
+      const data = await res.json();
+      if (!data || data.length === 0) return;
+
+      const best = data[0];
+      const addr = best.address || {};
+      const mappedNeighborhood = getMappedNeighborhood(street);
+      const neighborhood = mappedNeighborhood || addr.suburb || addr.neighbourhood || addr.city_district || '';
+      const lat = parseFloat(best.lat);
+      const lng = parseFloat(best.lon);
+
+      setLocation(prev => {
+        const base = prev || { lat, lng };
+        return {
+          ...base,
+          street: street,
+          number: number,
+          lat,
+          lng,
+          neighborhood: neighborhood || base.neighborhood || '',
+          address: best.display_name || base.address || ''
+        };
+      });
+      updateMarkerPosition(lat, lng);
+    } catch (error) {
+      console.error('Error geocodificant adreça:', error);
+    }
+  };
+
+  const scheduleManualGeocode = (street?: string, number?: string) => {
+    if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+    geocodeTimeout.current = setTimeout(() => {
+      geocodeManualAddress(street, number);
+    }, 600);
   };
 
   // Inicialització del mapa
@@ -369,6 +420,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const handleStreetChange = (val: string) => {
     const mappedNeighborhood = getMappedNeighborhood(val);
     setLocation(prev => prev ? ({ ...prev, street: val, ...(mappedNeighborhood ? { neighborhood: mappedNeighborhood } : {}) }) : { lat: 0, lng: 0, street: val, neighborhood: mappedNeighborhood || '' });
+    scheduleManualGeocode(val, location?.number || '');
     
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (val.length < 3) {
@@ -482,7 +534,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           </h2>
           {initialData && (
             <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-              Registrat: {new Date(initialData.createdAt).toLocaleDateString()}
+              Actualitzat: {new Date(initialData.updatedAt).toLocaleDateString('ca-ES')} · {new Date(initialData.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
         </div>
@@ -571,6 +623,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                       placeholder={isSearchingStreet ? "Cercant..." : "Cerca carrer..."}
                       value={location?.street || ''} 
                       onChange={(e) => handleStreetChange(e.target.value)} 
+                      onBlur={() => scheduleManualGeocode(location?.street || '', location?.number || '')}
                       onBlur={() => setTimeout(() => setShowStreetSuggestions(false), 200)}
                       onFocus={() => streetSuggestions.length > 0 && setShowStreetSuggestions(true)}
                       className="w-full bg-white border border-slate-300 rounded-xl p-3.5 text-[12px] font-black outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 placeholder-slate-400" 
@@ -606,7 +659,12 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                     type="text" 
                     placeholder="S/N" 
                     value={location?.number || ''} 
-                    onChange={(e) => setLocation(prev => prev ? ({ ...prev, number: e.target.value }) : { lat: 0, lng: 0, number: e.target.value })} 
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setLocation(prev => prev ? ({ ...prev, number: value }) : { lat: 0, lng: 0, number: value });
+                      scheduleManualGeocode(location?.street || '', value);
+                    }} 
+                    onBlur={() => scheduleManualGeocode(location?.street || '', location?.number || '')}
                     className="w-full bg-white border border-slate-300 rounded-xl p-3.5 text-[12px] font-black outline-none focus:ring-2 focus:ring-blue-500/20 text-center text-slate-700" 
                    />
                 </div>

@@ -282,6 +282,9 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
                         {new Date(crossing.lastInspectedDate).toLocaleDateString('ca-ES', { month: 'short', year: '2-digit' }).replace('.', '').toUpperCase()}
                         </div>
                     )}
+                    <div className="text-[7px] font-bold text-slate-400" title="Última actualització">
+                      {new Date(crossing.updatedAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })} · {new Date(crossing.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </div>
               </div>

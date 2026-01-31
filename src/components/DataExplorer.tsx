@@ -329,9 +329,14 @@ const DataExplorer: React.FC<Props> = ({ crossings, currentFilters, onFilterChan
                       </div>
                     </td>
                     <td className="px-2 py-3 text-right whitespace-nowrap">
-                      <span className="text-[9px] font-bold text-slate-600">
-                        {new Date(c.lastPaintedDate).toLocaleDateString('ca-ES', { month: 'short', year: 'numeric' }).toUpperCase()}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[9px] font-bold text-slate-600">
+                          {new Date(c.lastPaintedDate).toLocaleDateString('ca-ES', { month: 'short', year: 'numeric' }).toUpperCase()}
+                        </span>
+                        <span className="text-[8px] font-bold text-slate-400">
+                          {new Date(c.updatedAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })} · {new Date(c.updatedAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-2 py-3 text-center">
                       <PencilSquareIcon className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
