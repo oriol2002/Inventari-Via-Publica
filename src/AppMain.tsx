@@ -149,9 +149,11 @@ const App: React.FC = () => {
     setHasImageInForm(false);
 
     const author = user?.email || user?.displayName || user?.uid || 'Usuari';
+    const isAgentsUser = (user?.email || '').toLowerCase() === 'agentscivics@gmail.com';
     const existing = crossings.find(c => c.id === crossing.id);
 
     const nextGroups: AccessGroup[] = (() => {
+      if (isAgentsUser) return ['agents-civics'];
       if (userProfile?.role === 'admin') {
         if (crossing.accessGroups?.length) return crossing.accessGroups;
         if (activeSection && activeSection !== 'administrador') return [activeSection as AccessGroup];
@@ -235,6 +237,7 @@ const App: React.FC = () => {
   };
 
   const handleBatchAssignGroup = async (ids: string[], group: AccessGroup) => {
+    if (userProfile?.role !== 'admin') return;
     const author = user?.email || user?.displayName || user?.uid || 'Usuari';
     const now = Date.now();
     const updated = crossings.map(c => {
