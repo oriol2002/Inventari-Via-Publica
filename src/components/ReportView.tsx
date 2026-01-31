@@ -201,6 +201,26 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     if (isPdfBuilding) return;
     setIsPdfBuilding(true);
     try {
+      const loadImageData = async (url?: string | null) => {
+        if (!url) return null;
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!res.ok) return null;
+          const blob = await res.blob();
+          return await new Promise<string | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return null;
+        }
+      };
+
       const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -229,33 +249,59 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
 
-      const maxItems = Math.min(shareItems.length, 60);
+      const maxItems = Math.min(shareItems.length, 40);
       for (let i = 0; i < maxItems; i += 1) {
         const item = shareItems[i];
         const address = [item.location.street, item.location.number].filter(Boolean).join(' ').trim() || 'Sense adreça';
         const subtype = (item as any).assetSubType ? ` · ${(item as any).assetSubType}` : '';
-        const line = `${i + 1}. ${address} · ${item.assetType}${subtype} · ${item.state}`;
-        if (y > pageHeight - margin - 36) {
+        const signDetail = (item as any).signDetail ? ` · ${(item as any).signDetail}` : '';
+        const retention = (item as any).retentionLineLength ? ` · Línia: ${(item as any).retentionLineLength}m` : '';
+        const width = (item as any).crossingWidth ? ` · Ample: ${(item as any).crossingWidth}m` : '';
+        const coords = item.location.lat && item.location.lng ? `${item.location.lat.toFixed(5)}, ${item.location.lng.toFixed(5)}` : '';
+        const neighborhood = item.location.neighborhood || '';
+        const notes = item.notes ? item.notes.slice(0, 120) : '';
+
+        const blockHeight = 78;
+        if (y > pageHeight - margin - blockHeight) {
           doc.addPage();
           y = margin;
         }
-        doc.text(line, margin, y);
-        y += 12;
+        const imageSize = 56;
+        const imageUrl = item.imageThumb || item.image || '';
+        const imageData = await loadImageData(imageUrl);
+        if (imageData) {
+          doc.addImage(imageData, 'JPEG', margin, y - 2, imageSize, imageSize);
+        } else {
+          doc.setDrawColor(200);
+          doc.rect(margin, y - 2, imageSize, imageSize);
+        }
+
+        const textX = margin + imageSize + 10;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${i + 1}. ${address}`, textX, y + 10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${item.assetType}${subtype}${signDetail}${retention}${width}`, textX, y + 24);
+        doc.text(`Estat: ${item.state}  ·  Darrera actuació: ${item.lastPaintedDate}`, textX, y + 38);
+        if (neighborhood) {
+          doc.text(`Barri: ${neighborhood}`, textX, y + 52);
+        }
+        if (coords) {
+          doc.text(`Coords: ${coords}`, textX, y + 66);
+        }
+        if (notes) {
+          doc.text(`Notes: ${notes}`, textX, y + 80);
+        }
 
         const mapsLink = (item.location.lat && item.location.lng)
           ? `https://www.google.com/maps?q=${item.location.lat},${item.location.lng}`
           : '';
         if (mapsLink) {
-          if (y > pageHeight - margin - 20) {
-            doc.addPage();
-            y = margin;
-          }
           doc.setTextColor(0, 102, 204);
-          doc.textWithLink(mapsLink, margin + 14, y, { url: mapsLink });
+          doc.textWithLink(mapsLink, textX, y + 94, { url: mapsLink });
           doc.setTextColor(0, 0, 0);
-          y += 12;
         }
-        y += 2;
+
+        y += blockHeight;
       }
 
       if (shareItems.length > maxItems) {
