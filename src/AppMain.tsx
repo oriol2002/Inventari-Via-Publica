@@ -300,28 +300,7 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-1.5 md:gap-4 flex-shrink-0">
-            {backend === 'firebase' && (
-              <button
-                onClick={handleMigrateLocal}
-                className="hidden md:inline-flex px-3 md:px-4 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors"
-                title="Migrar dades locals a Firebase"
-              >
-                Migrar
-              </button>
-            )}
-            {/* Botó Sincronització */}
-            <button 
-              onClick={handleForceSync}
-              disabled={isSyncing}
-              className={`hidden md:inline-flex p-2 md:p-2.5 rounded-full border transition-colors flex-shrink-0 ${
-                isSyncing 
-                  ? 'bg-blue-100 text-blue-600 border-blue-300 animate-spin' 
-                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300'
-              }`}
-              title="Sincronitzar dades"
-            >
-              <ArrowPathIcon className="w-4 md:w-5 h-4 md:h-5" />
-            </button>
+            {/* Botons Migrar i Sincronitzar eliminats */}
 
             {/* Botó Notificacions */}
             <button 

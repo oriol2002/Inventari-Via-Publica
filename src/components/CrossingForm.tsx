@@ -461,11 +461,13 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     });
   };
 
-  if (showImageEditor && image) {
+  const editorImage = image || imageThumb || null;
+
+  if (showImageEditor && editorImage) {
     return (
       <ImageEditor 
-        imageUrl={image}
-        onSave={(editedImage) => { setImage(editedImage); setShowImageEditor(false); }}
+        imageUrl={editorImage}
+        onSave={(editedImage) => { setImage(editedImage); setImageThumb(editedImage); setShowImageEditor(false); }}
         onCancel={() => setShowImageEditor(false)}
       />
     );

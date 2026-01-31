@@ -55,7 +55,11 @@ const CrossingList: React.FC<Props> = ({ crossings, onFilterChange, currentFilte
   };
 
   const handleCardClick = (crossing: PedestrianCrossing, e: React.MouseEvent) => {
-    onEdit(crossing);
+    if (isSelectionMode) {
+      toggleSelection(crossing.id, e);
+    } else {
+      onEdit(crossing);
+    }
   };
 
   const handleConfirmDelete = () => {
