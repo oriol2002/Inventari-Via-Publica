@@ -8,6 +8,10 @@ import {
   ChatBubbleLeftRightIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
+import { jsPDF } from 'jspdf';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { firebaseStorage } from '../services/firebaseService';
+import { dbService } from '../services/dbService';
 import { 
   PieChart, 
   Pie, 
@@ -37,6 +41,8 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b'
 const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, onBack, city, aiAnalysis }) => {
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [isPdfBuilding, setIsPdfBuilding] = useState(false);
 
   const generatePDF = () => {
     if (!reportRef.current) {
@@ -158,6 +164,101 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     };
   }, [shareItems, reportTitle, city]);
 
+  const pdfSharePayload = useMemo(() => {
+    if (!pdfUrl) return null;
+    const subject = reportTitle || `Informe ${city}`;
+    const body = `${subject}\nPDF: ${pdfUrl}`;
+    return {
+      mailto: `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(body)}`
+    };
+  }, [pdfUrl, reportTitle, city]);
+
+  const generateCompactPdfAndUpload = async () => {
+    if (isPdfBuilding) return;
+    setIsPdfBuilding(true);
+    try {
+      const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      let y = margin;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(reportTitle || `Informe ${city}`, margin, y);
+      y += 18;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Data: ${displayDate} ${displayTime}`, margin, y);
+      y += 14;
+      if (internalId) {
+        doc.text(`Codi: ${internalId.replace('REP-', '')}`, margin, y);
+        y += 14;
+      }
+      doc.text(`Elements: ${shareItems.length}`, margin, y);
+      y += 18;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('Llistat d’elements', margin, y);
+      y += 16;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      const maxItems = Math.min(shareItems.length, 60);
+      for (let i = 0; i < maxItems; i += 1) {
+        const item = shareItems[i];
+        const address = [item.location.street, item.location.number].filter(Boolean).join(' ').trim() || 'Sense adreça';
+        const subtype = (item as any).assetSubType ? ` · ${(item as any).assetSubType}` : '';
+        const line = `${i + 1}. ${address} · ${item.assetType}${subtype} · ${item.state}`;
+        if (y > pageHeight - margin - 36) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += 12;
+
+        const mapsLink = (item.location.lat && item.location.lng)
+          ? `https://www.google.com/maps?q=${item.location.lat},${item.location.lng}`
+          : '';
+        if (mapsLink) {
+          if (y > pageHeight - margin - 20) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.setTextColor(0, 102, 204);
+          doc.textWithLink(mapsLink, margin + 14, y, { url: mapsLink });
+          doc.setTextColor(0, 0, 0);
+          y += 12;
+        }
+        y += 2;
+      }
+
+      if (shareItems.length > maxItems) {
+        if (y > pageHeight - margin - 20) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.setFontSize(9);
+        doc.text(`(+${shareItems.length - maxItems} elements més)`, margin, y);
+      }
+
+      const blob = doc.output('blob');
+      const reportId = externalId || internalId || `REP-${Date.now()}`;
+      const storageRef = ref(firebaseStorage, `reports/${reportId}/latest.pdf`);
+      await uploadBytes(storageRef, blob, { contentType: 'application/pdf', cacheControl: 'public,max-age=31536000' });
+      const url = await getDownloadURL(storageRef);
+      setPdfUrl(url);
+      await dbService.updateReportPdfUrl(reportId, url);
+    } catch (error) {
+      console.error('Error generant PDF lleuger:', error);
+      alert('No s\'ha pogut generar el PDF lleuger.');
+    } finally {
+      setIsPdfBuilding(false);
+    }
+  };
+
   const itemChunks = useMemo(() => {
     const chunks: PedestrianCrossing[][] = [];
     // Utilitzem 3 items per pàgina per defecte
@@ -229,6 +330,35 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={generateCompactPdfAndUpload}
+              disabled={isPdfBuilding}
+              className={`flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-xl shadow-sm border transition-all ${isPdfBuilding ? 'bg-slate-200 text-slate-400 border-slate-200' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+              title="Generar PDF lleuger"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF lleuger</span>
+            </button>
+            {pdfSharePayload && (
+              <>
+                <button
+                  onClick={() => window.open(pdfSharePayload.mailto, '_blank')}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+                  title="Compartir PDF per correu"
+                >
+                  <EnvelopeIcon className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF Email</span>
+                </button>
+                <button
+                  onClick={() => window.open(pdfSharePayload.whatsapp, '_blank')}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
+                  title="Compartir PDF per WhatsApp"
+                >
+                  <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF WhatsApp</span>
+                </button>
+              </>
+            )}
             <button
               onClick={() => window.open(sharePayload.mailto, '_blank')}
               className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
@@ -404,6 +534,35 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={generateCompactPdfAndUpload}
+            disabled={isPdfBuilding}
+            className={`flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-xl shadow-sm border transition-all ${isPdfBuilding ? 'bg-slate-200 text-slate-400 border-slate-200' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+            title="Generar PDF lleuger"
+          >
+            <SparklesIcon className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF lleuger</span>
+          </button>
+          {pdfSharePayload && (
+            <>
+              <button
+                onClick={() => window.open(pdfSharePayload.mailto, '_blank')}
+                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"
+                title="Compartir PDF per correu"
+              >
+                <EnvelopeIcon className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF Email</span>
+              </button>
+              <button
+                onClick={() => window.open(pdfSharePayload.whatsapp, '_blank')}
+                className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all"
+                title="Compartir PDF per WhatsApp"
+              >
+                <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">PDF WhatsApp</span>
+              </button>
+            </>
+          )}
           <button
             onClick={() => window.open(sharePayload.mailto, '_blank')}
             className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-700 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all"

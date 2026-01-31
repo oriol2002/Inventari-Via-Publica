@@ -89,6 +89,7 @@ export interface SavedReport {
   createdAt: number;
   aiAnalysis?: string;
   createdBy?: string;
+  pdfUrl?: string;
 }
 
 // Grups definits per Tortosa actualitzats

@@ -353,7 +353,8 @@ export const dbService = {
             crossingIds: r.crossingIds || [],
             createdAt: r.createdAt || Date.now(),
             aiAnalysis: r.aiAnalysis,
-            createdBy: r.createdBy || r.created_by || undefined
+            createdBy: r.createdBy || r.created_by || undefined,
+            pdfUrl: r.pdfUrl || r.pdf_url || undefined
           };
         });
 
@@ -440,6 +441,7 @@ export const dbService = {
         aiAnalysis: report.aiAnalysis || null,
         createdAt: report.createdAt,
         createdBy: report.createdBy || null,
+        pdfUrl: report.pdfUrl || null,
       }, { merge: true });
       return;
     }
@@ -452,11 +454,35 @@ export const dbService = {
           type: report.type,
           crossing_ids: report.crossingIds,
           ai_analysis: report.aiAnalysis,
-          created_at: new Date(report.createdAt).toISOString()
+          created_at: new Date(report.createdAt).toISOString(),
+          pdf_url: report.pdfUrl || null
       });
     } catch (error) {
       // No llançar error - l'informe ja està guardat localment
       console.warn("Report not synced to cloud (will sync when connection is available):", error);
+    }
+  },
+
+  async updateReportPdfUrl(reportId: string, pdfUrl: string): Promise<void> {
+    try {
+      const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || '[]');
+      const updatedReports = localReports.map((r: SavedReport) => r.id === reportId ? { ...r, pdfUrl } : r);
+      localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(updatedReports));
+    } catch (e) {
+      console.warn('Error updating report pdfUrl locally:', e);
+    }
+
+    if (OFFLINE_MODE) return;
+
+    if (BACKEND === 'firebase') {
+      await setDoc(doc(firebaseDb, 'reports', reportId), { pdfUrl }, { merge: true });
+      return;
+    }
+
+    try {
+      await supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', reportId);
+    } catch (error) {
+      console.warn('Error updating report pdfUrl in cloud:', error);
     }
   },
 
