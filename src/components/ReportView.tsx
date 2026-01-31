@@ -31,6 +31,7 @@ interface Props {
   reportTitle?: string;
   reportId?: string;
   reportCreatedBy?: string;
+  accentColor?: string;
   onBack: () => void;
   city: string;
   aiAnalysis?: string;
@@ -38,11 +39,13 @@ interface Props {
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#f97316', '#ef4444', '#64748b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e', '#a855f7'];
 
-const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, onBack, city, aiAnalysis }) => {
+const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, reportId: externalId, reportCreatedBy, accentColor: accentColorProp, onBack, city, aiAnalysis }) => {
   const [internalId, setInternalId] = useState<string>('');
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [isPdfBuilding, setIsPdfBuilding] = useState(false);
+  const accentColor = accentColorProp || '#2563eb';
+  const accentBg = accentColor === '#dc2626' ? 'rgba(220,38,38,0.1)' : 'rgba(37,99,235,0.1)';
 
   const generatePDF = () => {
     if (!reportRef.current) {
@@ -375,7 +378,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               <ChatBubbleLeftRightIcon className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
             </button>
-            <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
+            <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95" style={{ backgroundColor: accentColor }}>
               <PrinterIcon className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
               <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
@@ -387,7 +390,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           <div className="flex flex-col items-center gap-4 md:gap-12 print:gap-0 print:block">
             {/* Pàgina 1 Estadístiques */}
             <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
-               <div className="border-b-[4px] border-blue-600 pb-6 mb-8 flex justify-between items-end">
+               <div className="border-b-[4px] pb-6 mb-8 flex justify-between items-end" style={{ borderColor: accentColor }}>
                   <div>
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter">Informe Executiu</h1>
                     <p className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-2">Àrea Espai Public • {city}</p>
@@ -452,7 +455,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} style={{ fontSize: '8px', fontWeight: 700 }} interval={0} />
                           <YAxis axisLine={false} tickLine={false} style={{ fontSize: '8px' }} />
-                          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                          <Bar dataKey="value" fill={accentColor} radius={[4, 4, 0, 0]} barSize={30} />
                         </BarChart>
                       </ResponsiveContainer>
                    </div>
@@ -484,10 +487,10 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                <div className="flex-1 bg-slate-50 rounded-2xl p-8 border border-slate-200 relative overflow-hidden min-h-[300px] md:min-h-0">
                   <div className="flex justify-between items-start mb-4">
                      <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                       {aiAnalysis && <SparklesIcon className="w-4 h-4 text-blue-500" />}
+                       {aiAnalysis && <SparklesIcon className="w-4 h-4" style={{ color: accentColor }} />}
                        Resum i Conclusions
                      </h4>
-                     {aiAnalysis && <span className="text-[7px] font-bold text-blue-500 uppercase bg-blue-50 px-2 py-1 rounded">Generat per IA</span>}
+                     {aiAnalysis && <span className="text-[7px] font-bold uppercase px-2 py-1 rounded" style={{ color: accentColor, backgroundColor: accentBg }}>Generat per IA</span>}
                   </div>
                   
                   {aiAnalysis ? (
@@ -579,10 +582,11 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <ChatBubbleLeftRightIcon className="w-4 h-4" />
             <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">WhatsApp</span>
           </button>
-          <button
-            onClick={generatePDF}
-            className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95"
-          >
+            <button
+              onClick={generatePDF}
+              className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95"
+              style={{ backgroundColor: accentColor }}
+            >
             <PrinterIcon className="w-4 h-4" />
             <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
             <span className="text-[10px] font-black uppercase tracking-widest md:hidden">PDF</span>
@@ -596,10 +600,10 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           {/* PORTADA */}
           <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0">
             <div className="h-full flex flex-col">
-              <div className="border-b-[6px] border-blue-600 pb-10 mb-12 flex justify-between items-end">
+              <div className="border-b-[6px] pb-10 mb-12 flex justify-between items-end" style={{ borderColor: accentColor }}>
                 <div>
                   <h1 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter leading-[0.9]">
-                    Informe<br/><span className="text-blue-600">{city}</span>
+                    Informe<br/><span style={{ color: accentColor }}>{city}</span>
                   </h1>
                   <p className="text-[10px] md:text-[12px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-6">Àrea Espai Public • {city}</p>
                 </div>
@@ -618,7 +622,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                       <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Actius Analitzats</div>
                     </div>
                     <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 text-center">
-                      <div className="text-2xl md:text-3xl font-black text-blue-600 uppercase">{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
+                      <div className="text-2xl md:text-3xl font-black uppercase" style={{ color: accentColor }}>{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
                       <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Tipologia d'Informe</div>
                     </div>
                   </div>
@@ -637,7 +641,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <div key={pageIndex} className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[297mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[297mm] print:p-[15mm] print:m-0">
               <div className="h-full flex flex-col">
                 <header className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
-                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Detall Elements {city} (Part {pageIndex + 1})</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: accentColor }}>Detall Elements {city} (Part {pageIndex + 1})</h3>
                   <div className="text-[9px] font-black text-slate-400">Exp. #{internalId.replace('REP-', '')}</div>
                 </header>
 
@@ -657,7 +661,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                              <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">ID: {item.id.slice(-8).toUpperCase()}</span>
                           </div>
                           
-                          <div className="text-[8px] font-black text-blue-600 uppercase mb-3 tracking-widest">
+                          <div className="text-[8px] font-black uppercase mb-3 tracking-widest" style={{ color: accentColor }}>
                             {item.assetType} • {item.location.neighborhood || city} • {city}
                           </div>
 
@@ -668,9 +672,7 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                             </div>
                             <div>
                               <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Estat actual</label>
-                              <span className={`text-[10px] font-black uppercase ${
-                                item.state === CrossingState.POOR || item.state === CrossingState.DANGEROUS ? 'text-rose-600' : 'text-blue-600'
-                              }`}>{item.state}</span>
+                              <span className="text-[10px] font-black uppercase" style={{ color: item.state === CrossingState.POOR || item.state === CrossingState.DANGEROUS ? '#e11d48' : accentColor }}>{item.state}</span>
                             </div>
                             <div>
                               <label className="text-[7px] font-black text-slate-400 uppercase block mb-0.5">Darrera actuació</label>

@@ -582,6 +582,7 @@ const App: React.FC = () => {
           reportId={activeReport.id}
           reportCreatedBy={activeReport.createdBy}
           aiAnalysis={activeReport.aiAnalysis}
+          accentColor={activeSection === 'agents-civics' ? '#dc2626' : '#2563eb'}
           onBack={() => setActiveReport(null)} 
           city="Tortosa"
         />
