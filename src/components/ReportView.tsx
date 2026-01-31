@@ -665,6 +665,19 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
                   ))}
                 </div>
 
+                {pageIndex === itemChunks.length - 1 && (
+                  <div className="mt-6 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span>Data i Hora de generació</span>
+                      <span className="text-slate-900">{displayDate} - {displayTime}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-2">
+                      <span>Municipi</span>
+                      <span className="text-slate-900 uppercase">{city}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-auto pt-6 border-t border-slate-200 flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
                   <span>Incidencies Via Publica • {city}</span>
                   <span>Pàgina {pageIndex + 1} de {itemChunks.length}</span>
@@ -672,19 +685,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               </div>
             </div>
           ))}
-
-          <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[160mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[160mm] print:p-[15mm] print:m-0">
-            <div className="mt-auto text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span>Data i Hora de generació</span>
-                <span className="text-slate-900">{displayDate} - {displayTime}</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span>Municipi</span>
-                <span className="text-slate-900 uppercase">{city}</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
