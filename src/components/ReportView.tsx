@@ -264,7 +264,14 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
       });
 
       if (!response.ok) {
-        throw new Error('Render PDF failed');
+        let message = 'Render PDF failed';
+        try {
+          const data = await response.json();
+          if (data?.error) message = data.error;
+        } catch {
+          // ignore
+        }
+        throw new Error(message);
       }
 
       const blob = await response.blob();
