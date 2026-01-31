@@ -779,22 +779,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                 </select>
               </div>
             )}
-            {isSignType && currentSignDetails.length > 0 ? (
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Senyal</label>
-                <select
-                  value={signDetail}
-                  onChange={(e) => setSignDetail(e.target.value)}
-                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
-                >
-                  {currentSignDetails.map(option => (
-                    <option key={option} value={option}>{option}</option>)}
-                  )}
-                </select>
-              </div>
-            ) : (
-              <div />
-            )}
             {assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants' && (
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants (m)</label>
@@ -812,6 +796,24 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                 </p>
               </div>
             )}
+            {assetType !== AssetType.CROSSING || assetSubType !== 'Pas de vianants' ? (
+              isSignType && currentSignDetails.length > 0 ? (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Senyal</label>
+                  <select
+                    value={signDetail}
+                    onChange={(e) => setSignDetail(e.target.value)}
+                    className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
+                  >
+                    {currentSignDetails.map(option => (
+                      <option key={option} value={option}>{option}</option>)}
+                    )}
+                  </select>
+                </div>
+              ) : (
+                <div />
+              )
+            ) : null}
           </div>
 
           {assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció' && (
