@@ -102,7 +102,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const mobilitatSubTypes: Partial<Record<AssetType, string[]>> = {
     [AssetType.CROSSING]: ['Pas de vianants', 'Línia de retenció'],
     [AssetType.TRAFFIC_LIGHT]: ['Vehicles', 'Vianants', 'Bicicletes', 'Altres'],
-    [AssetType.SIGN]: ['Stop', 'Cediu el pas', 'Limit velocitat', 'Direccional', 'Altres'],
+    [AssetType.SIGN]: ['Prohibició', 'Obligació', 'Informació', 'Advertència', 'Altres'],
     [AssetType.BARRIER]: ['Protecció vianants', 'Accés restringit', 'Obra', 'Altres'],
     [AssetType.BOLLARD]: ['Fixa', 'Abatible', 'Retràctil', 'Altres'],
     [AssetType.SPEED_BUMP]: ['Llom', 'Coixí berlinès', 'Banda sonora', 'Altres'],

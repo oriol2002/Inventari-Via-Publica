@@ -16,7 +16,7 @@ export enum AssetType {
   URBAN_FURNITURE = 'Mobiliari urbà',
   CROSSING = 'Pas de Vianants',
   TRAFFIC_LIGHT = 'Semàfor',
-  SIGN = 'Senyal Vertical',
+  SIGN = 'Senyals',
   BARRIER = 'Barana/Protecció',
   BOLLARD = 'Pilona',
   SPEED_BUMP = 'Ressalt',
