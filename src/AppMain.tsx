@@ -423,7 +423,11 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
             {activeSection === 'agents-civics' ? (
               <div className="bg-white p-2 rounded-xl shadow-lg flex-shrink-0 border border-slate-200">
-                <img src="/LogoACivics.jfif" alt="Agents Cívics" className="w-6 md:w-7 h-6 md:h-7 object-contain" />
+                <img
+                  src={`${import.meta.env.BASE_URL}LogoACivics.jfif`}
+                  alt="Agents Cívics"
+                  className="w-6 md:w-7 h-6 md:h-7 object-contain"
+                />
               </div>
             ) : (
               <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg flex-shrink-0">
@@ -433,7 +437,7 @@ const App: React.FC = () => {
             <div className="flex flex-col min-w-0">
               <h1 className="text-lg md:text-xl font-black text-slate-900 leading-none tracking-tighter uppercase">TORTOSA</h1>
               <p className="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
-                {activeSection === 'agents-civics' ? 'Agents civis' : 'Inventari Via Pública'}
+                {activeSection === 'agents-civics' ? 'Agents cívics' : 'Inventari Via Pública'}
               </p>
             </div>
           </div>
