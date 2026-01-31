@@ -703,32 +703,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
             </div>
           </div>
 
-          {canAssignGroups && !isAgentsCivicsContext && (
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Àmbit</label>
-              <div className="flex gap-2 flex-wrap">
-                {([
-                  { key: 'mobilitat', label: 'Mobilitat' },
-                  { key: 'agents-civics', label: 'Agents Cívics' }
-                ] as { key: AccessGroup; label: string }[]).map(group => (
-                  <button
-                    key={group.key}
-                    type="button"
-                    onClick={() => {
-                      setAccessGroups(prev => prev.includes(group.key)
-                        ? prev.filter(g => g !== group.key)
-                        : [...prev, group.key]
-                      );
-                    }}
-                    className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${accessGroups.includes(group.key) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
-                  >
-                    {group.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-300 space-y-5">
              <div className="flex items-center justify-between">
                 <label className="text-[10px] font-black text-slate-600 uppercase flex items-center gap-1 tracking-widest"><MapPinIcon className="w-3.5 h-3.5" /> Localització</label>
