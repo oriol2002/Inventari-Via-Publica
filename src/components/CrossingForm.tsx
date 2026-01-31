@@ -63,6 +63,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const NOMINATIM_VIEWBOX = '0.43,40.86,0.63,40.74';
 
   const agentsCivicsAssetTypes: AssetType[] = [
+    AssetType.CROSSING,
     AssetType.AWARENESS,
     AssetType.SIGNS,
     AssetType.PAINT,
@@ -89,6 +90,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   ];
 
   const agentsCivicsSubTypes: Partial<Record<AssetType, string[]>> = {
+    [AssetType.CROSSING]: ['Pas de vianants', 'Línia de retenció'],
     [AssetType.AWARENESS]: ['Gossos', 'Patinets elèctrics', 'Escombraries', 'Altres'],
     [AssetType.SIGNS]: ['Prohibició', 'Obligació', 'Informació', 'Advertència', 'Altres'],
     [AssetType.PAINT]: ['Pas de vianants', 'PMR', 'Carril bici', 'Zona càrrega/descàrrega', 'Altres'],
