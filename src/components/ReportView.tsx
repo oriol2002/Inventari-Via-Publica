@@ -611,39 +611,16 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
 
               <div className="space-y-8 md:space-y-12">
                 <section>
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Resum de l'Auditoria</h3>
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Resum</h3>
                   <div className="grid grid-cols-2 gap-4 md:gap-6">
-                    <div className="bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-200 text-center">
-                      <div className="text-3xl md:text-4xl font-black text-slate-900">{itemsToDisplay.length}</div>
-                      <div className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Actius Analitzats</div>
+                    <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 text-center">
+                      <div className="text-2xl md:text-3xl font-black text-slate-900">{itemsToDisplay.length}</div>
+                      <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Actius Analitzats</div>
                     </div>
-                    <div className="bg-slate-50 p-6 md:p-8 rounded-[2rem] border border-slate-200 text-center">
-                      <div className="text-3xl md:text-4xl font-black text-blue-600 uppercase">{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
-                      <div className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Tipologia d'Informe</div>
+                    <div className="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200 text-center">
+                      <div className="text-2xl md:text-3xl font-black text-blue-600 uppercase">{reportType === 'technical' ? 'TÈCNIC' : 'MANT.'}</div>
+                      <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1">Tipologia d'Informe</div>
                     </div>
-                  </div>
-                </section>
-
-                <section className="bg-blue-50 p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-blue-200">
-                   <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Certificació de dades</h3>
-                   <p className="text-xs md:text-sm font-medium text-slate-700 leading-relaxed italic">
-                     Aquest document certifica l'estat dels elements de via pública inventariats mitjançant el sistema de gestió vial. Totes les imatges i coordenades han estat capturades in-situ per personal autoritzat.
-                   </p>
-                   {reportCreatedBy && (
-                     <p className="text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mt-4">
-                       Signat per: {reportCreatedBy}
-                     </p>
-                   )}
-                </section>
-
-                <section className="mt-12 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">
-                  <div className="flex justify-between border-b border-slate-200 pb-2">
-                    <span>Data i Hora de generació</span>
-                    <span className="text-slate-900">{displayDate} - {displayTime}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-200 pb-2">
-                    <span>Municipi</span>
-                    <span className="text-slate-900 uppercase">{city}</span>
                   </div>
                 </section>
               </div>
@@ -732,6 +709,19 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
               </div>
             </div>
           ))}
+
+          <div className="a4-page bg-white shadow-none md:shadow-2xl flex flex-col w-full md:w-[210mm] h-auto md:min-h-[160mm] p-6 md:p-[20mm] box-border print:shadow-none print:block print:w-[210mm] print:h-[160mm] print:p-[15mm] print:m-0">
+            <div className="mt-auto text-[10px] md:text-[11px] font-bold text-slate-500 uppercase space-y-2">
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span>Data i Hora de generació</span>
+                <span className="text-slate-900">{displayDate} - {displayTime}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span>Municipi</span>
+                <span className="text-slate-900 uppercase">{city}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
