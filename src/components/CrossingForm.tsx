@@ -774,8 +774,8 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                   className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
                 >
                   {getSubTypeOptions(assetType).map(option => (
-                    <option key={option} value={option}>{option}</option>)}
-                  )}
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
             )}
@@ -805,9 +805,9 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                     onChange={(e) => setSignDetail(e.target.value)}
                     className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-3 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none text-slate-700"
                   >
-                    {currentSignDetails.map(option => (
-                      <option key={option} value={option}>{option}</option>)}
-                    )}
+                      {currentSignDetails.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
                   </select>
                 </div>
               ) : (
