@@ -91,7 +91,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
 
   const agentsCivicsSubTypes: Partial<Record<AssetType, string[]>> = {
     [AssetType.AWARENESS]: ['Gossos', 'Patinets elèctrics', 'Escombraries', 'Altres'],
-    [AssetType.SIGNS]: ['Prohibició', 'Obligació', 'Informació', 'Advertència', 'Altres'],
+    [AssetType.SIGNS]: ['Obligació', 'Prohibició', 'Advertència', 'Prioritat', 'Limitació', 'Indicació'],
     [AssetType.PAINT]: ['Pas de vianants', 'Línia de retenció', 'PMR', 'Carril bici', 'Zona càrrega/descàrrega', 'Altres'],
     [AssetType.PAVEMENT]: ['Vorera', 'Calçada', 'Rigola', 'Altres'],
     [AssetType.URBAN_FURNITURE]: ['Paperera', 'Banc', 'Font', 'Jardinera'],
@@ -103,7 +103,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const mobilitatSubTypes: Partial<Record<AssetType, string[]>> = {
     [AssetType.CROSSING]: ['Pas de vianants', 'Línia de retenció'],
     [AssetType.TRAFFIC_LIGHT]: ['Vehicles', 'Vianants', 'Bicicletes', 'Altres'],
-    [AssetType.SIGN]: ['Prohibició', 'Obligació', 'Informació', 'Advertència', 'Altres'],
+    [AssetType.SIGN]: ['Obligació', 'Prohibició', 'Advertència', 'Prioritat', 'Limitació', 'Indicació'],
     [AssetType.BARRIER]: ['Protecció vianants', 'Accés restringit', 'Obra', 'Altres'],
     [AssetType.BOLLARD]: ['Fixa', 'Abatible', 'Retràctil', 'Altres'],
     [AssetType.SPEED_BUMP]: ['Llom', 'Coixí berlinès', 'Banda sonora', 'Altres'],
@@ -123,11 +123,12 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   };
 
   const signDetailOptions: Record<string, string[]> = {
-    Prohibició: ['Entrada prohibida', 'Prohibit estacionar', 'Prohibit aturar', 'Velocitat màxima', 'Altres'],
     Obligació: ['Fletxa dreta', 'Fletxa esquerra', 'Recte', 'Rotonda', 'Altres'],
-    Informació: ['Zona escolar', 'Hospital', 'Centre ciutat', 'Aparcament', 'Altres'],
-    Advertència: ['Pas de vianants', 'Perill', 'Obres', 'Risc esllavissada', 'Altres'],
-    Altres: ['Altres']
+    Prohibició: ['Entrada prohibida', 'Prohibit estacionar', 'Prohibit aturar', 'Altres'],
+    Advertència: ['Pas de vianants', 'Perill', 'Obres', 'Altres'],
+    Prioritat: ['Stop', 'Cediu el pas', 'Preferència', 'Altres'],
+    Limitació: ['Velocitat màxima', 'Pes màxim', 'Amplada màxima', 'Altres'],
+    Indicació: ['Aparcament', 'Hospital', 'Centre ciutat', 'Altres']
   };
 
   const isSignType = assetType === AssetType.SIGN || assetType === AssetType.SIGNS;
@@ -737,7 +738,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
           </div>
         )}
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-2 ${isSignType ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Tipus d'Element</label>
               <select
