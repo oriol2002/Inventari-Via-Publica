@@ -28,6 +28,12 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   const [lastPainted, setLastPainted] = useState<string>(initialData?.lastPaintedDate || new Date().toISOString().split('T')[0]);
   const [assetType, setAssetType] = useState<AssetType>(initialData?.assetType || AssetType.CROSSING);
   const [assetSubType, setAssetSubType] = useState<string>(initialData?.assetSubType || '');
+  const [retentionLineLength, setRetentionLineLength] = useState<string>(
+    initialData?.retentionLineLength ? String(initialData.retentionLineLength) : '0.40'
+  );
+  const [crossingWidth, setCrossingWidth] = useState<string>(
+    initialData?.crossingWidth ? String(initialData.crossingWidth) : '4'
+  );
   const [notes, setNotes] = useState<string>(initialData?.notes || '');
   const [accessGroups, setAccessGroups] = useState<AccessGroup[]>(
     initialData?.accessGroups || (defaultGroup ? [defaultGroup] : ['mobilitat'])
@@ -79,7 +85,6 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
     AssetType.PMR_PAINT,
     AssetType.LOADING_UNLOADING,
     AssetType.ACCESSIBILITY_RAMP,
-    AssetType.CONTAINER,
     AssetType.OTHER
   ];
 
@@ -95,7 +100,7 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
   };
 
   const mobilitatSubTypes: Partial<Record<AssetType, string[]>> = {
-    [AssetType.CROSSING]: ['Normal', 'Elevat', 'Amb semàfor', 'Altres'],
+    [AssetType.CROSSING]: ['Línia de retenció', 'Pas de vianants'],
     [AssetType.TRAFFIC_LIGHT]: ['Vehicles', 'Vianants', 'Bicicletes', 'Altres'],
     [AssetType.SIGN]: ['Stop', 'Cediu el pas', 'Limit velocitat', 'Direccional', 'Altres'],
     [AssetType.BARRIER]: ['Protecció vianants', 'Accés restringit', 'Obra', 'Altres'],
@@ -605,6 +610,12 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
       lastPaintedDate: lastPainted,
       assetType,
       assetSubType: assetSubType || undefined,
+      retentionLineLength: assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció'
+        ? Number(retentionLineLength) || 0.4
+        : undefined,
+      crossingWidth: assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants'
+        ? Number(crossingWidth) || 4
+        : undefined,
       accessGroups: canAssignGroups
         ? (accessGroups.length ? accessGroups : ['mobilitat'])
         : (defaultGroup ? [defaultGroup] : (accessGroups.length ? accessGroups : ['mobilitat'])),
@@ -739,6 +750,40 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
               </select>
             </div>
           </div>
+
+          {assetType === AssetType.CROSSING && assetSubType === 'Línia de retenció' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Llargada línia (m)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={retentionLineLength}
+                  onChange={(e) => setRetentionLineLength(e.target.value)}
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
+                />
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Ample estàndard: 0.40 m</p>
+              </div>
+            </div>
+          )}
+
+          {assetType === AssetType.CROSSING && assetSubType === 'Pas de vianants' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest pl-1">Ample pas vianants (m)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={crossingWidth}
+                  onChange={(e) => setCrossingWidth(e.target.value)}
+                  className="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 text-[11px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-700"
+                />
+                <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Llargada estàndard: 4 m</p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-slate-50 p-5 rounded-[2.5rem] border border-slate-300 space-y-5">
              <div className="flex items-center justify-between">

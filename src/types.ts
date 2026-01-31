@@ -48,6 +48,8 @@ export interface PedestrianCrossing {
   lastPaintedDate: string;
   assetType: AssetType;
   assetSubType?: string;
+  retentionLineLength?: number;
+  crossingWidth?: number;
   paintType?: string;
   notes?: string;
   createdAt: number;
