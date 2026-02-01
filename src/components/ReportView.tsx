@@ -254,9 +254,17 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
               <ArrowLeftIcon className="w-5 h-5 text-slate-600" />
             </button>
-            <div>
-              <h2 className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-tight line-clamp-1">Estadístic {city}</h2>
-              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stats.total} Actius</p>
+            <div className="flex items-center gap-3">
+              <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+                <img src={logoSecondary} alt="Ajuntament" className="w-6 h-6 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">{city.toUpperCase()}</h2>
+                <p className={`text-[8px] font-black uppercase tracking-widest ${isAgentsReport ? 'text-blue-600' : 'text-blue-600'}`}>
+                  {isAgentsReport ? 'Agents cívics' : 'Mobilitat'}
+                </p>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stats.total} Actius</p>
+              </div>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-2">
@@ -427,9 +435,17 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
             <ArrowLeftIcon className="w-5 h-5 text-slate-600" />
           </button>
-          <div>
-            <h2 className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-tight line-clamp-1">Informe de {city}</h2>
-            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{itemsToDisplay.length} Actius reportats</p>
+          <div className="flex items-center gap-3">
+            <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+              <img src={logoSecondary} alt="Ajuntament" className="w-6 h-6 object-contain" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">{city.toUpperCase()}</h2>
+              <p className={`text-[8px] font-black uppercase tracking-widest ${isAgentsReport ? 'text-blue-600' : 'text-blue-600'}`}>
+                {isAgentsReport ? 'Agents cívics' : 'Mobilitat'}
+              </p>
+              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{itemsToDisplay.length} Actius reportats</p>
+            </div>
           </div>
         </div>
         <div className="hidden md:flex items-center gap-2">
