@@ -11,42 +11,20 @@
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
     <script>
-      // Register Service Worker with update check
+      // Disable Service Worker and clear caches to force latest deploy
       if ('serviceWorker' in navigator) {
-        const swUrl = `/sw.js?v=${Date.now()}`;
-        navigator.serviceWorker.register(swUrl).then((registration) => {
-          console.log('Service Worker registered');
-          
-          // Check for updates every time the page loads
-          registration.update();
-          
-          // If there's a waiting worker, activate it immediately
-          if (registration.waiting) {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-          
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New service worker available, reload the page
-                  console.log('New service worker available, reloading...');
-                  window.location.reload();
-                }
-              });
+        navigator.serviceWorker.getRegistrations()
+          .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+          .then(() => caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))))
+          .then(() => {
+            if (!sessionStorage.getItem('sw-cleared')) {
+              sessionStorage.setItem('sw-cleared', '1');
+              window.location.reload();
             }
+          })
+          .catch(() => {
+            // ignore
           });
-        }).catch((error) => {
-          console.log('Service Worker registration failed:', error);
-        });
-        
-        // Reload if a new service worker takes control
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('New service worker activated, reloading...');
-          window.location.reload();
-        });
       }
     </script>
 </body>
