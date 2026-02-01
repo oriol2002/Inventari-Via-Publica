@@ -4,8 +4,7 @@ import { PedestrianCrossing, CrossingState, AssetType } from '../types';
 import { 
   ArrowLeftIcon, 
   PrinterIcon,
-  SparklesIcon,
-  DocumentTextIcon
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { 
   PieChart, 
@@ -138,56 +137,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     return reportType === 'technical' ? crossings.filter(c => c.state === CrossingState.POOR || c.state === CrossingState.DANGEROUS) : crossings;
   }, [crossings, reportType]);
 
-  const buildMarkdownReport = () => {
-    const title = reportTitle || `Informe ${city}`;
-    const dateTime = new Date().toLocaleString('ca-ES');
-    const lines: string[] = [];
-
-    lines.push(`# ${title}`);
-    lines.push('');
-    lines.push(`- Municipi: ${city}`);
-    lines.push(`- Data: ${dateTime}`);
-    lines.push(`- Tipus: ${reportType}`);
-    lines.push(`- Elements: ${itemsToDisplay.length}`);
-    lines.push('');
-
-    if (reportType === 'statistical' && stats) {
-      lines.push('## Resum');
-      lines.push('');
-      lines.push(`- Total: ${stats.total}`);
-      lines.push(`- Crítics: ${stats.critical}`);
-      lines.push(`- Índex de salut: ${stats.healthIndex}%`);
-      lines.push('');
-    }
-
-    lines.push('## Elements');
-    lines.push('');
-
-    itemsToDisplay.forEach((c, index) => {
-      const address = [c.location.street, c.location.number].filter(Boolean).join(' ').trim() || 'Sense adreça';
-      const subtype = (c as any).assetSubType ? ` · ${(c as any).assetSubType}` : '';
-      const coords = (c.location.lat && c.location.lng) ? `${c.location.lat}, ${c.location.lng}` : '';
-      lines.push(`${index + 1}. **${address}**`);
-      lines.push(`   - Tipus: ${c.assetType}${subtype}`);
-      lines.push(`   - Estat: ${c.state}`);
-      if (coords) lines.push(`   - Coordenades: ${coords}`);
-      if (c.notes) lines.push(`   - Notes: ${c.notes}`);
-      lines.push('');
-    });
-
-    return lines.join('\n');
-  };
-
-  const handleDownloadMarkdown = () => {
-    const content = buildMarkdownReport();
-    const fileName = `${(internalId || 'informe').replace(/\s+/g, '_')}.md`;
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
 
   const itemChunks = useMemo(() => {
     const chunks: PedestrianCrossing[][] = [];
@@ -274,14 +223,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
             <img src={logoSecondary} alt="Ajuntament" className="h-6 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownloadMarkdown}
-              className="flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-xl shadow-sm border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-all"
-              title="Descarregar document"
-            >
-              <DocumentTextIcon className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Document (MD)</span>
-            </button>
             <button onClick={generatePDF} className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95" style={{ backgroundColor: accentColor }}>
               <PrinterIcon className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Descarregar PDF</span>
@@ -455,14 +396,6 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           <img src={logoSecondary} alt="Ajuntament" className="h-6 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadMarkdown}
-            className="flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-xl shadow-sm border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-all"
-            title="Descarregar document"
-          >
-            <DocumentTextIcon className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Document (MD)</span>
-          </button>
           <button
             onClick={generatePDF}
             className="flex items-center gap-2 px-4 md:px-6 py-2.5 text-white rounded-xl shadow-lg transition-all active:scale-95"
