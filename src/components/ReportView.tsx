@@ -43,90 +43,76 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
   const logoPrimary = `${import.meta.env.BASE_URL}LogoACivics.jfif`;
   const logoSecondary = `${import.meta.env.BASE_URL}logo192.png`;
 
-  const normalizeOklabColors = (root: HTMLElement) => {
-    const temp = document.createElement('div');
-    temp.style.position = 'absolute';
-    temp.style.left = '-99999px';
-    temp.style.top = '0';
-    document.body.appendChild(temp);
-
-    const toRgb = (value: string) => {
-      if (!value) return value;
-      if (!value.includes('oklab') && !value.includes('oklch')) return value;
-      try {
-        temp.style.color = value;
-        const computed = getComputedStyle(temp).color;
-        return computed || value;
-      } catch {
-        return value;
-      }
-    };
-
-    const props = [
-      'color',
-      'backgroundColor',
-      'borderTopColor',
-      'borderRightColor',
-      'borderBottomColor',
-      'borderLeftColor',
-      'textDecorationColor'
-    ] as const;
-
-    const elements = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))];
-    elements.forEach((el) => {
-      const styles = getComputedStyle(el);
-      props.forEach((prop) => {
-        const value = styles[prop as any] as string;
-        const rgb = toRgb(value);
-        if (rgb !== value) {
-          (el.style as any)[prop] = rgb;
-        }
-      });
-    });
-
-    document.body.removeChild(temp);
-  };
-
-  const generatePDF = async () => {
+  const generatePDF = () => {
     if (!reportRef.current) {
       alert('Error: No s\'ha pogut trobar l\'informe per descarregar.');
       return;
     }
 
-    try {
-      const html2pdf = (await import('html2pdf.js')).default as any;
-      const fileName = `${(internalId || 'informe').replace(/\s+/g, '_')}.pdf`;
-      const clone = reportRef.current.cloneNode(true) as HTMLElement;
-      clone.style.background = 'white';
-      clone.style.padding = '0';
-
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'fixed';
-      wrapper.style.left = '-99999px';
-      wrapper.style.top = '0';
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
-      normalizeOklabColors(clone);
-
-      await html2pdf()
-        .from(clone)
-        .set({
-          margin: [10, 10, 10, 10],
-          filename: fileName,
-          image: { type: 'jpeg', quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
-          enableLinks: true
-        })
-        .save();
-
-      document.body.removeChild(wrapper);
-    } catch (error) {
-      console.error('Error generant PDF:', error);
-      alert('No s\'ha pogut generar el PDF.');
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Si us plau, permet les finestres emergents per descarregar el PDF');
+      return;
     }
+
+    // Clone the report content
+    const clonedContent = reportRef.current.cloneNode(true) as HTMLElement;
+
+    // Get all stylesheets
+    const stylesheets = Array.from(document.styleSheets)
+      .map((sheet) => {
+        try {
+          if (sheet.cssRules) {
+            let css = '';
+            for (let i = 0; i < sheet.cssRules.length; i++) {
+              css += sheet.cssRules[i].cssText;
+            }
+            return css;
+          }
+        } catch (e) {
+          // Ignore CORS errors
+        }
+        return '';
+      })
+      .join('\n');
+
+    // Write HTML to print window
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+              color-adjust: exact;
+            }
+            html, body {
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+            ${stylesheets}
+          </style>
+        </head>
+        <body>
+          ${clonedContent.innerHTML}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    };
   };
 
   useEffect(() => {
