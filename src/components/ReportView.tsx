@@ -43,6 +43,50 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
   const logoPrimary = `${import.meta.env.BASE_URL}LogoACivics.jfif`;
   const logoSecondary = `${import.meta.env.BASE_URL}logo192.png`;
 
+  const normalizeOklabColors = (root: HTMLElement) => {
+    const temp = document.createElement('div');
+    temp.style.position = 'absolute';
+    temp.style.left = '-99999px';
+    temp.style.top = '0';
+    document.body.appendChild(temp);
+
+    const toRgb = (value: string) => {
+      if (!value) return value;
+      if (!value.includes('oklab') && !value.includes('oklch')) return value;
+      try {
+        temp.style.color = value;
+        const computed = getComputedStyle(temp).color;
+        return computed || value;
+      } catch {
+        return value;
+      }
+    };
+
+    const props = [
+      'color',
+      'backgroundColor',
+      'borderTopColor',
+      'borderRightColor',
+      'borderBottomColor',
+      'borderLeftColor',
+      'textDecorationColor'
+    ] as const;
+
+    const elements = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))];
+    elements.forEach((el) => {
+      const styles = getComputedStyle(el);
+      props.forEach((prop) => {
+        const value = styles[prop as any] as string;
+        const rgb = toRgb(value);
+        if (rgb !== value) {
+          (el.style as any)[prop] = rgb;
+        }
+      });
+    });
+
+    document.body.removeChild(temp);
+  };
+
   const generatePDF = async () => {
     if (!reportRef.current) {
       alert('Error: No s\'ha pogut trobar l\'informe per descarregar.');
@@ -52,8 +96,21 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
     try {
       const html2pdf = (await import('html2pdf.js')).default as any;
       const fileName = `${(internalId || 'informe').replace(/\s+/g, '_')}.pdf`;
+      const clone = reportRef.current.cloneNode(true) as HTMLElement;
+      clone.style.background = 'white';
+      clone.style.padding = '0';
+
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = '-99999px';
+      wrapper.style.top = '0';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      normalizeOklabColors(clone);
+
       await html2pdf()
-        .from(reportRef.current)
+        .from(clone)
         .set({
           margin: [10, 10, 10, 10],
           filename: fileName,
@@ -64,6 +121,8 @@ const ReportView: React.FC<Props> = ({ crossings, reportType, reportTitle, repor
           enableLinks: true
         })
         .save();
+
+      document.body.removeChild(wrapper);
     } catch (error) {
       console.error('Error generant PDF:', error);
       alert('No s\'ha pogut generar el PDF.');
