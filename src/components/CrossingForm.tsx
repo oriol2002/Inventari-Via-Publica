@@ -854,8 +854,10 @@ const CrossingForm: React.FC<Props> = ({ initialData, onClose, onSubmit, city, o
                       placeholder={isSearchingStreet ? "Cercant..." : "Cerca carrer..."}
                       value={location?.street || ''} 
                       onChange={(e) => handleStreetChange(e.target.value)} 
-                      onBlur={() => scheduleManualGeocode(location?.street || '', location?.number || '')}
-                      onBlur={() => setTimeout(() => setShowStreetSuggestions(false), 200)}
+                      onBlur={() => {
+                        scheduleManualGeocode(location?.street || '', location?.number || '');
+                        setTimeout(() => setShowStreetSuggestions(false), 200);
+                      }}
                       onFocus={() => streetSuggestions.length > 0 && setShowStreetSuggestions(true)}
                       className="w-full bg-white border border-slate-300 rounded-xl p-3.5 text-[12px] font-black outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-700 placeholder-slate-400" 
                     />
