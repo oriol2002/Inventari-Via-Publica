@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobilitat-tortosa-v5';
+const CACHE_NAME = 'mobilitat-tortosa-v6';
 
 self.addEventListener('install', (event) => {
   // Force activate immediately
